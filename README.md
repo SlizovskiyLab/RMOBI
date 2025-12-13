@@ -1,33 +1,35 @@
-# AMR-GraphNet: AMR Engraftment Network for FMT
+# RMOBI: a Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts
 
-AMRGraphNet is a C++ framework for constructing and analyzing large scale heterogeneous temporal networks of antimicrobial resistance gene (ARG) and mobile genetic element (MGE) colocalizations across fecal microbiota transplantation (FMT) phases. The tool models colocalization and temporal relationships from patient metagenomic data, producing structured outputs for interactive visualization using D3.js.
+RMOBI is a framework built in C++ for constructing and analyzing large scale heterogeneous temporal networks of antimicrobial resistance gene (ARG) and mobile genetic element (MGE) colocalizations across fecal microbiota transplantation (FMT) phases. The tool models colocalization and temporal relationships from patient metagenomic data, producing structured outputs for interactive visualization using D3.js.
 
 ## Project Overview
 
-The goal of AMRGraphNet is to model and visualize the dynamic interactions between ARGs and MGEs before and after FMT treatment. The C++ implementation generates structured JSON files containing node and edge information, representing both colocalization edges and temporal edges that capture ARG–MGE evolution across donor, pre-FMT, and post-FMT phases.
+The goal of RMOBI is to model and visualize the dynamic interactions between ARGs and MGEs before and after FMT treatment. The C++ implementation generates structured JSON files containing node and edge information, representing both colocalization edges and temporal edges that capture ARG–MGE evolution across donor, pre-FMT, and post-FMT phases.
 
 The accompanying web based visualization module, built with D3.js, dynamically renders these networks, enabling users to explore treatment related trends and filter the network interactively based on clinical and biological criteria.
 
 
 ## Features
 
-1. Efficient C++ implementation for constructing heterogeneous temporal graphs
+1. Efficient C++ implementation for constructing heterogeneous temporal graphs.
+   
+2.. Supports multiple categorization modes, including disease type and temporal dynamics.
 
-2. Outputs JSON files with detailed node and edge metadata
+3. Produces structured CSV files that summarize Disease specific, MGE group and temporal dynamics of colocalizations before and after FMT.
 
-3. Supports multiple categorization modes, including disease type and temporal dynamics
+4. Interactive D3.js visualization with real time filtering and multi phase exploration.
 
-4. Interactive D3.js visualization with real time filtering and multi phase exploration
+5. Filter by disease type, patient phase, MGE group, or drill down to individual ARG/MGE nodes.
 
-5. Filter by disease type, patient phase, MGE group, or drill down to individual ARG/MGE nodes
+6. Export network visualizations as SVG files for publication or downstream analysis.
 
-6. Export network visualizations as SVG files for publication or downstream analysis
-
-7. Fully documented workflow and configuration examples for reproducibility
+7. Fully documented workflow and configuration examples for reproducibility.
 
 ---
 
-## Installation
+### The web-based system will be available on the following link
+
+## Run the Program  
 
 ### Prerequisites
 
@@ -48,7 +50,6 @@ cd AMRGraphNet
 make
 
 
-To run the program
 
 ### Linux/macOS
 Step 1: Create and enter build directory
