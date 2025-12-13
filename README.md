@@ -14,7 +14,7 @@ The accompanying web based visualization module, built with D3.js, dynamically r
 
 1. Efficient C++ implementation for constructing heterogeneous temporal graphs.
    
-2.. Supports multiple categorization modes, including disease type and temporal dynamics.
+2. Supports multiple categorization modes, including disease type and temporal dynamics.
 
 3. Produces structured CSV files that summarize Disease specific, MGE group and temporal dynamics of colocalizations before and after FMT.
 
@@ -53,8 +53,9 @@ JSON library (e.g., nlohmann/json)
 
 
 # Clone the repository
-git clone https://github.com/<your-repo>/AMRGraphNet.git
-cd AMRGraphNet
+git clone https://github.com/SlizovskiyLab/RMOBI.git
+
+cd RMOBI
 
 # Build the C++ project
 make
