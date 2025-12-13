@@ -33,7 +33,7 @@
     </ul>
 </header>
 
-<h3 class="h3">ARG–MGE Colocalization State Transition Dynamics</h3>
+<h3 class="h3">ARG–MGE Colocalization Longitudinal Dynamics</h3>
 <div id="plots" class="d-flex flex-column gap-4"></div>
 </div>
 <div id="plots"></div>
@@ -49,7 +49,7 @@ const colorMap = {
   transferred: "#c79100"
 };
 const keys = Object.keys(colorMap);
-const pageSize = 50;
+const pageSize = 30;
 
 // -------------------- Load data --------------------
 d3.json("json/temporal_dynamics_disease.json").then(rawData => {
