@@ -1,4 +1,5 @@
-# RMOBI: a Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts
+# RMOBI: a Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts 
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-orange.svg)
 
 RMOBI is a framework built in C++ for constructing and analyzing large scale heterogeneous temporal networks of antimicrobial resistance gene (ARG) and mobile genetic element (MGE) colocalizations across fecal microbiota transplantation (FMT) phases. The tool models colocalization and temporal relationships from patient metagenomic data, producing structured outputs for interactive visualization using D3.js.
 
@@ -27,9 +28,18 @@ The accompanying web based visualization module, built with D3.js, dynamically r
 
 ---
 
-### The web-based system will be available on the following link
+## License
 
-## Run the Program  
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.  
+You may use, modify, and redistribute this software under the terms of the GPLv3.  
+Any derivative work must also be distributed under the same license.
+
+See the [`LICENSE`](LICENSE) file for the full license text.
+
+
+
+
+## Run the C++ Framework   
 
 ### Prerequisites
 
