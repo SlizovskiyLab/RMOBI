@@ -1,3 +1,6 @@
+// Released under the GNU GPLv3; see LICENSE for details.
+// Developed by Boucher Lab and Slizovskiy Lab.
+
 #include "../include/parser.h"
 #include "../include/id_maps.h"
 #include <fstream>

@@ -1,3 +1,6 @@
+// Released under the GNU GPLv3; see LICENSE for details.
+// Developed by Boucher Lab and Slizovskiy Lab.
+
 #ifndef ID_MAPS_H
 #define ID_MAPS_H
 

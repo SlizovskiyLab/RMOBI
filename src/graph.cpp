@@ -1,3 +1,6 @@
+// Released under the GNU GPLv3; see LICENSE for details.
+// Developed by Boucher Lab and Slizovskiy Lab.
+
 #include <iostream>
 #include "../include/graph.h"
 

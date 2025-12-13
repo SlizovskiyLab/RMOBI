@@ -1,3 +1,6 @@
+// Released under the GNU GPLv3; see LICENSE for details.
+// Developed by Boucher Lab and Slizovskiy Lab.
+
 // --- D3 Setup ---
 const svg = d3.select("#graph");
 const g = svg.append("g");

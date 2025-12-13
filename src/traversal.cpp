@@ -1,3 +1,6 @@
+// Released under the GNU GPLv3; see LICENSE for details.
+// Developed by Boucher Lab and Slizovskiy Lab.
+
 /* Traverse the graph based on earliest colocalizations */
 #include "../include/traversal.h"
 #include "../include/graph.h"
