@@ -449,6 +449,8 @@ void exportColocalizations(const Graph& g,
         false, true, true, "PreFMT & PostFMT Only", temporal_dynamics_persist.string(), false);
     getPatientwiseColocalizationsByCriteria(g, colocalizationByIndividual,
         true, true, true, "PreFMT, Donor & PostFMT", temporal_dynamics_persist.string(), true);
+
+    exportDetailedTemporalDynamics(colocalizationByIndividual);
 }
 
 
@@ -643,7 +645,105 @@ void getTopARGMGEPairsByUniquePatients(
     // std::cout << "Total unique colocalizations: " << freqList.size() << "\n";
 }
 
+void writeDetailedCSV(
+    const std::map<std::tuple<int, int, int>, std::set<Timepoint>>& colocs,
+    const std::string& filename,
+    const std::string& label,
+    bool append
+) {
+    std::ofstream file;
+    if (append) {
+        file.open(filename, std::ios::app);
+    } else {
+        file.open(filename);
+        file << "ARG_Name,MGE_Name,Patient_ID,Label\n"; 
+    }
 
+    for (const auto& [tuple, tps] : colocs) {
+        int patientId = std::get<0>(tuple);
+        int argId     = std::get<1>(tuple);
+        int mgeId     = std::get<2>(tuple);
+
+        std::string argName = getARGName(argId);
+        std::string mgeName = getMGEName(mgeId);
+
+        if (argName.empty()) argName = "Unknown_ARG_" + std::to_string(argId);
+        if (mgeName.empty()) mgeName = "Unknown_MGE_" + std::to_string(mgeId);
+
+        file << argName << ","
+             << mgeName << ","
+             << patientId << "," 
+             << label << "\n";
+    }
+    file.close();
+    std::cout << "Detailed list written to " << filename << "\n";
+}
+
+void getDetailedColocalizationsByCriteria(
+    const std::map<std::tuple<int, int, int>, std::set<Timepoint>>& colocalizationByIndividual,
+    bool donorStatus,
+    bool preFMTStatus,
+    bool postFMTStatus,
+    const std::string& label,
+    const std::string& csvFile,
+    bool append
+) {
+    std::map<std::tuple<int, int, int>, std::set<Timepoint>> filteredColocs;
+
+    for (const auto& [tuple, tps] : colocalizationByIndividual) {
+        bool hasDonor = std::any_of(tps.begin(), tps.end(), [](const Timepoint& tp) {
+            return tp == Timepoint::Donor;
+        });
+        bool hasPreFMT = std::any_of(tps.begin(), tps.end(), [](const Timepoint& tp) {
+            return isPreFMT(tp);
+        });
+        bool hasPostFMT = std::any_of(tps.begin(), tps.end(), [](const Timepoint& tp) {
+            return isPostFMT(tp);
+        });
+
+        if ((hasDonor == donorStatus) && (hasPreFMT == preFMTStatus) && (hasPostFMT == postFMTStatus)) {
+            filteredColocs.insert({tuple, tps});
+        }
+    }
+
+    if (!csvFile.empty()) {
+        writeDetailedCSV(filteredColocs, csvFile, label, append);
+    }
+}
+
+void exportDetailedTemporalDynamics(
+    const std::map<std::tuple<int,int,int>, std::set<Timepoint>>& colocalizationByIndividual) 
+{
+    auto makeDetailedPath = [](fs::path p) {
+        std::string s = p.string();
+        size_t dot = s.find_last_of('.');
+        if(dot != std::string::npos) s.insert(dot, "_detailed");
+        else s += "_detailed";
+        return s;
+    };
+
+    // Emerge
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        false, false, true, "PostFMT Only", makeDetailedPath(temporal_dynamics_emerge), false);
+    
+    // Disappear
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        false, true, false, "PreFMT Only", makeDetailedPath(temporal_dynamics_disappear), false);
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        true, true, false, "Donor & PreFMT Only", makeDetailedPath(temporal_dynamics_disappear), true);
+
+    // Transfer
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        true, false, true, "Donor & PostFMT Only", makeDetailedPath(temporal_dynamics_transfer), true);
+
+    // Persist
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        false, true, true, "PreFMT & PostFMT Only", makeDetailedPath(temporal_dynamics_persist), false);
+    getDetailedColocalizationsByCriteria(colocalizationByIndividual,
+        true, true, true, "PreFMT, Donor & PostFMT", makeDetailedPath(temporal_dynamics_persist), true);
+        
+    std::cout << "\n[SUCCESS] Detailed datasets with Patient IDs have been generated.\n";
+}
 
 
 
