@@ -94,4 +94,25 @@ void writeCSV(
     const std::vector<std::vector<std::string>>& rows, bool append = false
 );
 
+void writeDetailedCSV(
+    const std::map<std::tuple<int, int, int>, std::set<Timepoint>>& colocs,
+    const std::string& filename,
+    const std::string& label,
+    bool append = false
+);
+
+void getDetailedColocalizationsByCriteria(
+    const std::map<std::tuple<int, int, int>, std::set<Timepoint>>& colocalizationByIndividual,
+    bool donorStatus,
+    bool preFMTStatus,
+    bool postFMTStatus,
+    const std::string& label,
+    const std::string& csvFile,
+    bool append = false
+);
+
+void exportDetailedTemporalDynamics(
+    const std::map<std::tuple<int,int,int>, std::set<Timepoint>>& colocalizationByIndividual
+);
+
 #endif
