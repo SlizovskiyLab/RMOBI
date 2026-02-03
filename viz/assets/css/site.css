@@ -2,14 +2,14 @@
 /*# sourceMappingURL=site.css.map */
 /* --- Global Typography Improvements --- */
 body, html {
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
     font-size: 16px;
     line-height: 1.55;
 }
 
 /* Make top-left title match H1 */
 .nav-brand-title {
-    font-family: sans-serif !important;
+    font-family: inherit !important;
     font-size: 2.25rem !important;   /* same as Bootstrap h1 (≈36px) */
     font-weight: 800 !important;     /* bold like H1 */
     letter-spacing: -0.5px;          /* gives the clean H1 look */
@@ -20,7 +20,7 @@ body, html {
 
 /* --- Section Titles --- */
 h1, h2, h3 {
-    font-weight: 600 !important;
+    font-weight: 650 !important;
     letter-spacing: -0.3px;
     margin-bottom: 0.75rem;
 }
@@ -52,5 +52,6 @@ ul.clean-list li {
 }
 
 ul.clean-list li strong {
-    font-weight: 600;
+    font-weight: 650;
 }
+

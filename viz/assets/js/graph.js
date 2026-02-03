@@ -554,6 +554,7 @@ function updateTimepointButtonText() {
 
 // --- SVG DOWNLOAD ---
 function downloadCurrentGraphAsSVG() {
+  console.log("SVG clicked");
   const svgEl = document.querySelector("#graph");
   if (!svgEl) return;
   const clone = svgEl.cloneNode(true);
@@ -594,6 +595,87 @@ function downloadCurrentGraphAsSVG() {
 }
 
 
+async function downloadCurrentGraphAsPDF() {
+  const svgEl = document.querySelector("#graph");        // your <svg id="graph">
+  if (!svgEl) return;
+
+  // ---- Clone SVG ----
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+  // ---- Inline CSS ----
+  const cssStyles = Array.from(document.styleSheets)
+    .map(ss => {
+      try { return Array.from(ss.cssRules).map(r => r.cssText).join("\n"); }
+      catch { return ""; }
+    })
+    .join("\n");
+  const styleEl = document.createElement("style");
+  styleEl.textContent = cssStyles;
+  clone.insertBefore(styleEl, clone.firstChild);
+
+  // Use the on-screen size of the SVG element
+  const rect = svgEl.getBoundingClientRect();
+  const outW = Math.max(1, Math.round(rect.width));
+  const outH = Math.max(1, Math.round(rect.height));
+
+  // Match exported pixel size to what user sees
+  clone.setAttribute("width", outW);
+  clone.setAttribute("height", outH);
+
+  // Ensure viewBox corresponds to current viewBox (your SVG already has it)
+  // If you don't have one, set it:
+  if (!clone.getAttribute("viewBox")) {
+    clone.setAttribute("viewBox", `0 0 ${outW} ${outH}`);
+  }
+
+  // ---- Serialize ----
+  const svgString = new XMLSerializer().serializeToString(clone);
+
+  // ---- SVG -> Canvas ----
+  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = () => reject(new Error("SVG->IMG load failed (CORS/fonts/images?)"));
+    img.src = svgUrl;
+  });
+
+  const scale = 2; // sharper
+  const canvas = document.createElement("canvas");
+  canvas.width = outW * scale;
+  canvas.height = outH * scale;
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.drawImage(img, 0, 0, outW, outH);
+
+  URL.revokeObjectURL(svgUrl);
+
+  // ---- Canvas -> PDF ----
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: outW >= outH ? "landscape" : "portrait",
+    unit: "px",
+    format: [outW, outH]
+  });
+
+  pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, outW, outH);
+
+  const fileName =
+    (typeof currentGraphKey === "string"
+      ? currentGraphKey.replace(/^.*[\\/]/, "").replace(".json", "")
+      : "graph") + ".pdf";
+
+  pdf.save(fileName);
+}
+
+
+
+
 // --- EVENT LISTENERS ---
 d3.select("#dataset").on("change", function() { loadAndRenderGraph(this.value); });
 d3.select("#diseaseFilter").on("change", applyFiltersAndDraw);
@@ -608,7 +690,7 @@ d3.select("#toggleColo").on("change", updateLinkVisibility);
 d3.select("#toggleTemporal").on("change", updateLinkVisibility);
 d3.selectAll(".timepoint-checkbox").on("change", applyFiltersAndDraw);
 document.getElementById("downloadSvgBtn").addEventListener("click", downloadCurrentGraphAsSVG);
-
+document.getElementById("downloadPdfBtn").addEventListener("click", downloadCurrentGraphAsPDF);
 
 const legendOverlay = document.getElementById("legendOverlay");
 document.getElementById("toggleLegend").addEventListener("change", function() {

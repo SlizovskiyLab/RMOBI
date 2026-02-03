@@ -209,7 +209,7 @@ table {
 }
 
 .legend-line.temporal-donor-pre {
-	background-color: green;
+	background-color: green ;
   border-bottom: 2px dashed white;
 }
 .legend-line.temporal-donor-post {
@@ -336,55 +336,91 @@ table {
   border: 1px solid #333;
 }
 
-/* Triangle (Virus) */
+.legend-shape.ice {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: grey;
+
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  -webkit-clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+}
+
+/* THICK OUTLINE */
+.legend-shape.ice::before {
+  content: "";
+  position: absolute;
+  inset: -1px;                 /* outline thickness */
+  background: grey;
+  z-index: -1;
+
+  clip-path: inherit;
+  -webkit-clip-path: inherit;
+}
+
+
+
+/* Cross (Prophage) */
 .legend-shape.prophage {
   position: relative;
-  width: 0;
-  height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 16px solid grey; /* fill color */
+  width: 14px;
+  height: 14px;
   display: inline-block;
   vertical-align: middle;
   margin-right: 6px;
 }
 
-/* Add a visible border around the triangle */
+/* vertical bar */
+.legend-shape.prophage::before,
 .legend-shape.prophage::after {
   content: "";
   position: absolute;
-  top: 0;
-  left: -10px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 18px solid #333; /* border color */
-  z-index: -1; /* place behind the main triangle */
-  transform: translateY(-2px);
-}
-
-/* Star (ICE) */
-.legend-shape.ice {
-  background: grey; /* teal */
-  width: 20px;
-  height: 12px;
-  position: relative;
+  background-color: grey;
   border: 1px solid #333;
+  border-radius: 2px;
 }
 
-/*  (Replicon) */
-.legend-shape.transposon {
-  background-color: grey;   
-  width: 14px;                 /* equal sides for a square */
+/* vertical bar */
+.legend-shape.prophage::before {
+  width: 4px;
   height: 14px;
-  border: 1px solid #333;      /* dark border for contrast */
-  border-radius: 2px;          /* slight rounding for aesthetics */
-  display: inline-block;       /* ensures proper placement inside legend */
-  transform: none;             
-  vertical-align: middle;      
-  margin-right: 6px;           
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
 }
+
+/* horizontal bar */
+.legend-shape.prophage::after {
+  width: 14px;
+  height: 4px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
 
 /* Square (IS/TE) */
 .legend-shape.genomic-island {
@@ -427,6 +463,39 @@ table {
   z-index: -1; /* place behind the main triangle */
   transform: translateY(-2px);
 }
+
+.legend-shape.replicon {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 12px;
+  vertical-align: middle;
+  margin-right: 6px;
+  transform: rotate(0deg);
+
+}
+
+.legend-shape.replicon::before {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 6px;
+  background: grey;
+  border-radius: 2px;
+
+  /* center bar */
+  left: 7px;
+  top: 0;
+
+  /* left & right bars */
+  box-shadow:
+    -5px 2px 0 grey,
+     5px 2px 0 grey;
+
+  transform-origin: center;
+}
+
+
 
 /* Octagon (Unknown) */
 .legend-shape.unknown {

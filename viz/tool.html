@@ -178,8 +178,10 @@
                         <button class="btn btn-outline-dark" id="downloadSvgBtn">
                             Download SVG
                         </button>
+                        <button type="button" class="btn btn-outline-dark" id="downloadPdfBtn">
+                            Download PDF
+                        </button>
                     </div>
-
                 </div>
                 </div>
             </div>
@@ -218,8 +220,8 @@
             <li><span class="legend-shape plasmid"></span> Inc_plasmid</li>
             <li><span class="legend-shape plasmid"></span> Colicin_plasmid</li>
             <li><span class="legend-shape prophage"></span> Prophage</li>
-            <li><span class="legend-shape prophage"></span> ICE</li>
-            <li><span class="legend-shape transposon"></span> Replicon</li>
+            <li><span class="legend-shape ice"></span> ICE</li>
+            <li><span class="legend-shape replicon"></span> Replicon</li>
             <li><span class="legend-shape genomic-island"></span> Likely IS/TE</li>
             <li><span class="legend-shape virus"></span> Virus</li>
         </ul>
@@ -264,6 +266,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="assets/js/graph.js"></script>
 <script type="module" src="./assets/js/site.js"></script>
 
