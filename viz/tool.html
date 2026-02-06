@@ -7,6 +7,13 @@
     <meta charset="utf-8"/>
     <title>RMOBI :: Tool</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 + Bootswatch (Litera) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/litera/bootstrap.min.css"
+      rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/site.css">
     <link rel="stylesheet" href="./assets/css/style.css">
     <style>
@@ -20,6 +27,7 @@
 </head>
 
 <body>
+<div class="page-bg">
 <div class="container-fluid">
     <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
         <a href="index.html" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
@@ -40,7 +48,7 @@
         <div class="row g-3">
 
             <!-- LEFT SIDE: FILTERS CARD -->
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-3">
                         <!-- Graph View -->
@@ -144,78 +152,136 @@
             </div>
 
             <!-- RIGHT SIDE: TOGGLES CARD -->
-            <div class="col-lg-4">
+            <div class="col-lg-2">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-2">
                     <!-- Column 1 -->
-                    <div class="col-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleLabels" checked>
                             <label class="form-check-label" for="toggleLabels">Node Labels</label>
                         </div>
 
-                        <div class="form-check mt-2">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleTemporal" checked>
                             <label class="form-check-label" for="toggleTemporal">Temporal Links</label>
                         </div>
-                    </div>
-
-                    <!-- Column 2 -->
-                    <div class="col-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleColo" checked>
                             <label class="form-check-label" for="toggleColo">Colocalization Links</label>
                         </div>
 
-                        <div class="form-check mt-2">
+                        <!-- <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleLegend">
-                            <label class="form-check-label" for="toggleLegend">Legend</label>
-                        </div>
-                    </div>
-
-                    <!-- Download Button -->
-                    <div class="col-12 mt-3">
+                        </div> -->
+                        <!-- Download Button -->
+                        <div class="d-flex gap-2 mt-3">
                         <button class="btn btn-outline-dark" id="downloadSvgBtn">
-                            Download SVG
+                             SVG
                         </button>
                         <button type="button" class="btn btn-outline-dark" id="downloadPdfBtn">
-                            Download PDF
+                             PDF
                         </button>
+                    </div>
                     </div>
                 </div>
                 </div>
+            
+            <div class="col-lg-4">
+            <div class="card p-3 h-100 shadow-sm">
+
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="fw-semibold">Legend</div>
+                </div>
+
+                <div class="mini-legend-grid">
+                <!-- Column 1: Sample colors -->
+                <div class="mini-legend-col">
+                    <div class="mini-item"><span class="legend-symbol donor"></span><span>Donor</span></div>
+                    <div class="mini-item"><span class="legend-symbol pre"></span><span>Pre-FMT</span></div>
+                    <div class="mini-item"><span class="legend-symbol post1"></span><span>Post 1–30d</span></div>
+                    <div class="mini-item"><span class="legend-symbol post2"></span><span>Post 31–60d</span></div>
+                    <div class="mini-item"><span class="legend-symbol post3"></span><span>Post 61+d</span></div>
+                </div>
+
+                <!-- Column 2: Edge types -->
+                <div class="mini-legend-col">
+                    <div class="mini-item"><span class="legend-line colo"></span><span>Colocalization</span></div>
+                    <div class="mini-item"><span class="legend-line temporal"></span><span>Temporal</span></div>
+                    <button
+                    class="btn btn-outline-secondary btn-sm mt-2"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#legendModal"
+                    aria-controls="legendModal">
+                    View more
+                </button>
+
+                </div>
+                </div>
+
+            </div>
             </div>
 
+            </div>
         </div>
     </div>
 
     
     <div id="graph-container">
-        <svg id="graph" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="graph-stats" class="graph-stats">
+        <div class="stat"><span class="k">Nodes</span><span id="st-nodes" class="v">0</span></div>
+        <div class="stat"><span class="k">ARG</span><span id="st-arg" class="v">0</span></div>
+        <div class="stat"><span class="k">MGE</span><span id="st-mge" class="v">0</span></div>
+
+        <div class="divider"></div>
+
+        <div class="stat"><span class="k">Edges</span><span id="st-edges" class="v">0</span></div>
+        <div class="stat"><span class="k">Colocolization</span><span id="st-coloc" class="v">0</span></div>
+        <div class="stat"><span class="k">Temporal</span><span id="st-temp" class="v">0</span></div>
+        </div>
+        <div class="card mb-4 shadow-sm">
+            <svg id="graph" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="zoom-fab-fixed" role="group" aria-label="Zoom controls">
+                <button id="zoom-in"  class="fab-btn" type="button" aria-label="Zoom in">
+                <!-- plus icon -->
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M7 1h2v6h6v2H9v6H7V9H1V7h6z"></path>
+                </svg>
+                </button>
+
+                <button id="zoom-out" class="fab-btn" type="button" aria-label="Zoom out">
+                <!-- minus icon -->
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M1 7h14v2H1z"></path>
+                </svg>
+                </button>
+            </div>
+        </div>
     </div>
+<!-- Modal -->
+<div class="modal fade" id="legendModal" tabindex="-1" aria-labelledby="legendModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content legend-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="legendModalLabel">Graph Legend</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-    <div id="legendOverlay" class="legend-overlay">
-    <div class="legend-content">
-        <button type="button" class="btn-close legend-close" aria-label="Close"></button>
-        <h6 class="mb-3"><strong>Graph Legend</strong></h6>
-
+      <div class="modal-body">
         <!-- Node section -->
         <div class="legend-section">
-        <p><strong>Nodes:</strong></p>
-        <ul>
+          <p class="fw-semibold mb-2">Nodes</p>
+          <ul class="legend-list">
             <li><span class="legend-symbol arg"></span> AMR (Antimicrobial Resistance Gene)</li>
-            <li><span class="legend-symbol donor"></span> Donor Sample</li>
-            <li><span class="legend-symbol pre"></span> Pre-FMT</li>
-            <li><span class="legend-symbol post1"></span> Post-FMT (1–30 d)</li>
-            <li><span class="legend-symbol post2"></span> Post-FMT (31–60 d)</li>
-            <li><span class="legend-symbol post3"></span> Post-FMT (61+ d)</li>
-        </ul>
+          </ul>
         </div>
 
+        <hr class="my-3"/>
+
         <!-- MGE group section -->
-        <div class="legend-section mt-3">
-        <p><strong>MGE Groups (Shapes):</strong></p>
-        <ul>
+        <div class="legend-section">
+          <p class="fw-semibold mb-2">MGE Groups (Shapes)</p>
+          <ul class="legend-list">
             <li><span class="legend-shape plasmid"></span> Plasmid</li>
             <li><span class="legend-shape plasmid"></span> Inc_plasmid</li>
             <li><span class="legend-shape plasmid"></span> Colicin_plasmid</li>
@@ -224,29 +290,36 @@
             <li><span class="legend-shape replicon"></span> Replicon</li>
             <li><span class="legend-shape genomic-island"></span> Likely IS/TE</li>
             <li><span class="legend-shape virus"></span> Virus</li>
-        </ul>
+          </ul>
         </div>
+
+        <hr class="my-3"/>
 
         <!-- Edge section -->
-        <div class="legend-section mt-3">
-        <p><strong>Edges:</strong></p>
-        <ul>
+        <div class="legend-section">
+          <p class="fw-semibold mb-2">Edges</p>
+          <ul class="legend-list">
             <li><span class="legend-line colo"></span> Colocalization Link (ARG–MGE)</li>
             <li><span class="legend-line temporal"></span> Temporal Link (same ARG/MGE across timepoints)</li>
-        </ul>
+          </ul>
         </div>
 
-        <div class="legend-section mt-3">
-        <p><strong>Temporal Edges:</strong></p>
-        <ul>
-            <li><span class="legend-line temporal-donor-pre"></span> Donor -> PreFMT</li>
-            <li><span class="legend-line temporal-donor-post"></span> Donor -> PostFMT</li>
-            <li><span class="legend-line temporal-pre-post"></span> PreFMT -> PostFMT</li>
-            <li><span class="legend-line temporal-post-post"></span> PostFMT -> PostFMT</li>
-        </ul>
+        <hr class="my-3"/>
+
+        <div class="legend-section">
+          <p class="fw-semibold mb-2">Temporal Edges</p>
+          <ul class="legend-list">
+            <li><span class="legend-line temporal-donor-pre"></span> Donor → PreFMT</li>
+            <li><span class="legend-line temporal-donor-post"></span> Donor → PostFMT</li>
+            <li><span class="legend-line temporal-pre-post"></span> PreFMT → PostFMT</li>
+            <li><span class="legend-line temporal-post-post"></span> PostFMT → PostFMT</li>
+          </ul>
         </div>
+      </div>
     </div>
-    </div>
+  </div>
+</div>
+
 
 
 <div id="tooltip"
@@ -269,6 +342,6 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="assets/js/graph.js"></script>
 <script type="module" src="./assets/js/site.js"></script>
-
+</div>
 </body>
 </html>

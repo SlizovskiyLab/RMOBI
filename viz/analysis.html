@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 + Bootswatch (Flatly) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css"
+      rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/site.css">
-    <title>ARG–MGE Longitudinal Visualization</title>
+    <title>RMOBI </title>
     <!-- <link rel="apple-touch-icon" sizes="180x180" href="./assets/img/apple-touch-icon.png"> -->
     <!-- <link rel="icon" type="image/png" sizes="32x32" href="./assets/img/favicon-32x32.png"> -->
     <!-- <link rel="icon" type="image/png" sizes="16x16" href="./assets/img/favicon-16x16.png"> -->
     <link rel="manifest" href="./site.webmanifest">
-    <link rel="stylesheet" href="./assets/css/style.css">
-  <style>
-  </style>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
+<div class="page-bg">
     <div class="container-fluid">
 
         <header
@@ -33,195 +38,448 @@
     </ul>
 </header>
 
-<h3 class="h3">ARG–MGE Colocalization Longitudinal Dynamics</h3>
-<div id="plots" class="d-flex flex-column gap-4"></div>
+
+<div class="card shadow-sm border-0 mb-5 overflow-hidden">
+  <div class="p-3 border-bottom bg-white">
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <h5 id="chartTitle" class="mb-0 fw-semibold">ARG–MGE Colocalization Dynamics</h5>
+          <span class="badge rounded-pill text-bg-light border" id="pageBadge">Page 1/1</span>
+        </div>
+        <div class="text-muted small mt-1">
+          Stacked counts of patients by colocalization status across time.
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <select id="diseaseSelect" class="form-select form-select-sm" style="min-width: 320px;"></select>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="pagination">
+          <button id="prevBtn" class="btn btn-outline-secondary">◀</button>
+          <button id="nextBtn" class="btn btn-outline-secondary">▶</button>
+          <button id="downloadPdfBtn" class="btn btn-sm btn-secondary">Download PDF </button>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+    <div class="card-body p-0 position-relative" id="chartExportArea">
+    <svg id="chartSvg" width="100%" height="540"></svg>
+    <div id="legendBox" class="chart-legend-box"></div>
+    <div id="chartTip" class="chart-tip" style="opacity:0;"></div>
+  </div>
+
 </div>
-<div id="plots"></div>
+
+
+
+
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+
 <script>
-const width = 1400, height = 500;
-const margin = { top: 60, right: 40, bottom: 120, left: 80 };
+const width = 1400, height = 540;
+const margin = { top: 60, right: 40, bottom: 180, left: 80 };
 const colorMap = {
-  persisted:   "#1a5f8f",
-  emerged:     "#cc660b",
-  disappeared: "#236f46",
-  transferred: "#c79100"
+  persisted:   "#5B8DEF", // soft royal blue
+  emerged:     "#F6BD60", // warm golden peach
+  disappeared: "#84DCC6", // mint teal
+  transferred: "#F28482"  // coral rose
 };
+
+
 const keys = Object.keys(colorMap);
-const pageSize = 30;
+const pageSize = 20;
 
-// -------------------- Load data --------------------
-d3.json("json/temporal_dynamics_disease.json").then(rawData => {
-  const diseases = Object.keys(rawData);
-  const container = d3.select("#plots");
-  container.selectAll("*").remove();
+const diseaseNames = {
+  "MDRB": "Multi Drug Resistant Bacteria (MDRB)",
+  "rCDI": "recurrent Clostridioides difficile infection (rCDI)",
+  "Melanoma": "Melanoma"
+};
 
-  diseases.forEach(disease => {
-    const panelDiv = container.append("div")
-      .attr("class", "card shadow-sm border-0 mb-5");
+// --- One SVG, one inner group ---
+const svg = d3.select("#chartSvg")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .style("background", "#fff");
 
-    const header = panelDiv.append("div")
-      .attr("class", "d-flex justify-content-between align-items-center p-2 px-3 border-bottom bg-light");
+const g = svg.append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
 
-     const diseaseTitle = header.append("div")
-      .attr("class", "fw-semibold text-dark fs-5 d-flex align-items-baseline gap-1");
+// const legendG = svg.append("g")
+//   .attr("class", "legend")
+//   .attr("transform", `translate(${width - 200}, 25)`);
 
-      const diseaseNames = {
-        "MDRB": "Multi Drug Resistant Bacteria (MDRB)",
-        "rCDI": "recurrent Clostridioides difficile infection (rCDI)",
-        "Melanoma": "Melanoma"
-      };
+// function drawLegend() {
+//   legendG.selectAll("*").remove();
+//   keys.forEach((k, i) => {
+//     legendG.append("rect")
+//       .attr("x", 0).attr("y", i * 22)
+//       .attr("width", 16).attr("height", 16)
+//       .attr("fill", colorMap[k]);
+//     legendG.append("text")
+//       .attr("x", 24).attr("y", i * 22 + 12)
+//       .attr("class", "text-dark small fw-medium")
+//       .text(k.charAt(0).toUpperCase() + k.slice(1));
+//   });
+// }
+// drawLegend();
 
-      const displayName = diseaseNames[disease] || disease;
-      diseaseTitle.append("span").text(displayName);
-  
+// --- State for current disease + pagination + cached processed data ---
+let RAW = null;
+let currentDisease = null;
+let currentPage = 0;
+let sorted = [];
+let totalPages = 1;
+let yDomainMax = 5;
 
-    const btnGroup = header.append("div")
-      .attr("class", "btn-group btn-group-sm") 
-      .html(`
-        <button id="prev-${disease}" class="btn btn-outline-dark">◀ Prev</button>
-        <button id="next-${disease}" class="btn btn-outline-dark">Next ▶</button>
-      `);
+function preprocessDisease(disease) {
+  const data = RAW[disease].map(d => ({
+    colocalization: d.colocalization,
+    status: (d.status || "").toLowerCase(),
+    patients: +d.patients || 0
+  }));
 
-     // --- SVG container for D3 chart ---
-    const svg = panelDiv.append("svg")
-      .attr("width", "100%")
-      .attr("height", height)
-      .style("background", "#fff")
-      .style("border-radius", "0.375rem")
-      .style("box-shadow", "0 0.125rem 0.25rem rgba(0,0,0,.075)");
+  const aggPairs = d3.rollups(
+    data,
+    v => d3.sum(v, d => d.patients),
+    d => d.colocalization,
+    d => d.status
+  );
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+  const combined = aggPairs.map(([coloc, statusMap]) => {
+    const obj = { colocalization: coloc };
+    statusMap.forEach(([s, c]) => obj[s] = c);
+    obj.total = d3.sum(statusMap, ([, c]) => c);
+    return obj;
+  }).filter(d => d.total > 0);
 
-    // --- Aggregate all data ---
-    const data = rawData[disease].map(d => ({
-      colocalization: d.colocalization,
-      status: (d.status || "").toLowerCase(),
-      patients: +d.patients || 0
-    }));
+  const sortedLocal = combined.sort((a, b) => d3.descending(a.total, b.total));
 
-    const aggPairs = d3.rollups(
-      data,
-      v => d3.sum(v, d => d.patients),
-      d => d.colocalization,
-      d => d.status
+  const diseaseMax = d3.max(sortedLocal, d => d.total) || 1;
+  const yMax = Math.max(diseaseMax, 5);
+
+  return { sortedLocal, yMax };
+}
+
+function setButtonsDisabled() {
+  d3.select("#prevBtn").attr("disabled", currentPage === 0 ? true : null);
+  d3.select("#nextBtn").attr("disabled", currentPage >= totalPages - 1 ? true : null);
+}
+
+function drawPage() {
+  g.selectAll("*").remove();
+
+  const start = currentPage * pageSize;
+  const pageData = sorted.slice(start, start + pageSize);
+
+  const displayName = diseaseNames[currentDisease] || currentDisease;
+  d3.select("#chartTitle").text(displayName);
+  d3.select("#pageBadge").text(`Page ${currentPage + 1}/${totalPages}`);
+
+  if (!pageData.length) {
+    g.append("text")
+      .attr("x", (width - margin.left - margin.right) / 2)
+      .attr("y", 60)
+      .attr("text-anchor", "middle")
+      .style("fill", "#6c757d")
+      .style("font-size", "15px")
+      .text("No data for this selection.");
+    setButtonsDisabled();
+    return;
+  }
+
+  const stacked = d3.stack().keys(keys)(pageData);
+
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+
+  const x = d3.scaleBand()
+    .domain(pageData.map(d => d.colocalization))
+    .range([0, innerW])
+    .padding(0.25);
+
+  const y = d3.scaleLinear()
+    .domain([0, yDomainMax])
+    .nice()
+    .range([innerH, 0]);
+
+  // Gridlines (y)
+  g.append("g")
+    .attr("class", "grid")
+    .call(
+      d3.axisLeft(y)
+        .ticks(6)
+        .tickSize(-innerW)
+        .tickFormat("")
     );
 
-    const combined = aggPairs.map(([coloc, statusMap]) => {
-      const obj = { colocalization: coloc };
-      statusMap.forEach(([s, c]) => obj[s] = c);
-      obj.total = d3.sum(statusMap, ([, c]) => c);
-      return obj;
-    }).filter(d => d.total > 0);
+  // Y axis (light)
+  g.append("g")
+    .attr("class", "axis")
+    .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format("d")))
+    .call(sel => sel.select(".domain").remove());
 
-    const sorted = combined.sort((a, b) => d3.descending(a.total, b.total));
-    const totalPages = Math.ceil(sorted.length / pageSize);
-    let currentPage = 0;
+  // X axis
+  const xAxis = g.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${innerH})`)
+    .call(d3.axisBottom(x).tickSize(0))
+    .call(sel => sel.select(".domain").remove());
 
-    const diseaseMax = d3.max(sorted, d => d.total) || 1;
-    const yDomainMax = Math.max(diseaseMax, 5); 
+  // Proper slanted labels
+  xAxis.selectAll("text")
+    .style("text-anchor", "end")
+    .attr("transform", "rotate(-40)")
+    .attr("dx", "-0.6em")
+    .attr("dy", "0.25em")
+    .style("font-size", "15px")
+    .style("fill", "#495057");
 
-    // -------------- Draw page function --------------
-    function drawPage() {
-      g.selectAll("*").remove();
+  // Axis label
+  g.append("text")
+    .attr("x", -48)
+    .attr("y", innerH / 2)
+    .attr("transform", `rotate(-90, ${-48}, ${innerH / 2})`)
+    .style("fill", "#495057")
+    .style("font-size", "16px")
+    .style("font-weight", 1000)
+    .text("Patients");
 
-      const start = currentPage * pageSize;
-      const pageData = sorted.slice(start, start + pageSize);
+  // Bars
+  const t = d3.transition().duration(350);
 
-      const stacked = d3.stack().keys(keys)(pageData);
+  const layer = g.selectAll(".layer")
+    .data(stacked, d => d.key)
+    .join("g")
+    .attr("class", "layer")
+    .attr("fill", d => colorMap[d.key]);
 
-      const x = d3.scaleBand()
-        .domain(pageData.map(d => d.colocalization))
-        .range([0, width - margin.left - margin.right])
-        .padding(0.2);
+  const rects = layer.selectAll("rect")
+    .data(d => d, d => d.data.colocalization)
+    .join("rect")
+    .attr("x", d => x(d.data.colocalization))
+    .attr("width", x.bandwidth())
+    .attr("y", innerH)                 // animate up
+    .attr("height", 0)
+    .attr("rx", 1)                      // rounded corners
+    .attr("ry", 1)
+    .attr("stroke", "rgba(17,24,39,0.45)")   // subtle near-black
+    .attr("stroke-width", 0.9)
+    .attr("shape-rendering", "crispEdges");
+;
 
-      const y = d3.scaleLinear()
-        .domain([0, yDomainMax])
-        .nice()
-        .range([height - margin.top - margin.bottom, 0]);
 
-      // X-axis
-      g.append("g")
-        .attr("transform", `translate(0,${height - margin.top - margin.bottom})`)
-        .call(d3.axisBottom(x))
-        .selectAll("text")
-        .attr("transform", "rotate(-40)")
-        .style("text-anchor", "end");
+  rects.transition(t)
+    .attr("y", d => y(d[1]))
+    .attr("height", d => Math.max(0, y(d[0]) - y(d[1])));
 
-      // Y-axis
-      g.append("g")
-        .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format("d")));
-      
-      // Y-label
-      g.append("text")
-        .attr("text-anchor", "middle")
-        .attr("transform", `translate(${-50}, ${(height - margin.top - margin.bottom) / 2}) rotate(-90)`)
-        .style("font-size", "13px")
-        .text("Number of Patients");
+  // Hover: subtle highlight + tooltip
+  rects
+    .on("mouseenter", function(event, d) {
+      d3.select(this).attr("opacity", 0.85);
 
-      // Stacked bars
-      const layer = g.selectAll(".layer")
-        .data(stacked)
-        .join("g")
-        .attr("fill", d => colorMap[d.key]);
+      const segment = Math.round(d[1] - d[0]);
+      const total = d.data.total;
+      const pct = total ? ((segment / total) * 100).toFixed(1) : "0.0";
 
-      layer.selectAll("rect")
-        .data(d => d)
-        .join("rect")
-        .attr("x", d => x(d.data.colocalization))
-        .attr("y", d => y(d[1]))
-        .attr("height", d => y(d[0]) - y(d[1]))
-        .attr("width", x.bandwidth())
-        .append("title")
-        .text(d => `${d.data.colocalization}\n${Math.round(d[1] - d[0])} patients`);
-
-      // Title
-      g.append("text")
-        .attr("x", (width - margin.left - margin.right) / 2)
-        .attr("y", -20)
-        .attr("class", "fw-bold text-center text-uppercase")
-        .style("font-size", "16px")
-        .attr("text-anchor", "middle")
-        .text(`${disease} (${currentPage + 1}/${totalPages})`);
-
-      // Legend
-      const legend = svg.append("g")
-        .attr("transform", `translate(${width - 200}, 25)`);
-      keys.forEach((k, i) => {
-        legend.append("rect")
-          .attr("x", 0).attr("y", i * 22)
-          .attr("width", 16).attr("height", 16)
-          .attr("fill", colorMap[k]);
-        legend.append("text")
-          .attr("x", 24).attr("y", i * 22 + 12)
-          .attr("class", "text-dark small fw-medium")
-          .text(k.charAt(0).toUpperCase() + k.slice(1));
-      });
-
-      // Disable buttons at limits
-      d3.select(`#prev-${disease}`).attr("disabled", currentPage === 0 ? true : null);
-      d3.select(`#next-${disease}`).attr("disabled", currentPage >= totalPages - 1 ? true : null);
-    }
-
-    // Pagination buttons
-    d3.select(`#next-${disease}`).on("click", () => {
-      if (currentPage < totalPages - 1) {
-        currentPage++;
-        drawPage();
-      }
+      showTip(
+        `<div style="font-weight:700; margin-bottom:6px;">${d.data.colocalization}</div>
+         <div><b>Segment:</b> ${segment} patients</div>
+         <div><b>Total:</b> ${total}</div>
+         <div><b>Share:</b> ${pct}%</div>`,
+        event
+      );
+    })
+    .on("mousemove", function(event) {
+      moveTip(event);
+    })
+    .on("mouseleave", function() {
+      d3.select(this).attr("opacity", 1);
+      hideTip();
     });
 
-    d3.select(`#prev-${disease}`).on("click", () => {
-      if (currentPage > 0) {
-        currentPage--;
-        drawPage();
-      }
-    });
+    // --- TOTAL labels on top of each stack ---
+    g.selectAll(".total-label")
+      .data(pageData, d => d.colocalization)
+      .join("text")
+      .attr("class", "total-label")
+      .attr("text-anchor", "middle")
+      .attr("x", d => x(d.colocalization) + x.bandwidth() / 2)
+      .attr("y", d => y(d.total) - 6)
+      .style("font-size", "11px")
+      .style("font-weight", 700)
+      .style("fill", "#111827")
+      .text(d => d3.format(",")(d.total));
 
-    // Initial draw
+// --- SEGMENT labels inside stacks ---
+const minLabelHeightPx = 14; // hide labels for tiny segments
+
+const segmentLabels = g.selectAll(".segment-label-layer")
+  .data(stacked, s => s.key)
+  .join("g")
+  .attr("class", "segment-label-layer");
+
+segmentLabels.selectAll("text")
+  .data(s => s.map(d => ({ ...d, key: s.key })), d => d.data.colocalization)
+  .join("text")
+  .attr("class", "segment-label")
+  .attr("text-anchor", "middle")
+  .attr("x", d => x(d.data.colocalization) + x.bandwidth() / 2)
+  .attr("y", d => (y(d[0]) + y(d[1])) / 2) // center of segment
+  .style("font-size", "10px")
+  .style("font-weight", 600)
+  .style("fill", "#111827") 
+  .style("pointer-events", "none")
+  .text(d => {
+    const v = Math.round(d[1] - d[0]); // segment value
+    const h = Math.abs(y(d[0]) - y(d[1])); // pixel height
+    return (v > 0 && h >= minLabelHeightPx) ? d3.format(",")(v) : "";
+  });
+
+  setButtonsDisabled();
+}
+
+
+function setDisease(disease) {
+  currentDisease = disease;
+  currentPage = 0;
+
+  const { sortedLocal, yMax } = preprocessDisease(disease);
+  sorted = sortedLocal;
+  yDomainMax = yMax;
+  totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+
+  drawPage();
+}
+
+// Pagination handlers (one set)
+d3.select("#nextBtn").on("click", () => {
+  if (currentPage < totalPages - 1) {
+    currentPage++;
     drawPage();
+  }
+});
+d3.select("#prevBtn").on("click", () => {
+  if (currentPage > 0) {
+    currentPage--;
+    drawPage();
+  }
+});
+
+// Load JSON, populate dropdown, draw initial
+d3.json("json/temporal_dynamics_disease.json").then(rawData => {
+  RAW = rawData;
+  const diseases = Object.keys(RAW);
+
+  const select = d3.select("#diseaseSelect");
+  select.selectAll("option")
+    .data(diseases)
+    .join("option")
+    .attr("value", d => d)
+    .text(d => diseaseNames[d] || d);
+
+  // default
+  setDisease(diseases.includes("Melanoma") ? "Melanoma" : diseases[0]);
+
+  // redraw on change
+  select.on("change", function() {
+    setDisease(this.value);
   });
 });
+
+function drawLegendBox() {
+  const legend = d3.select("#legendBox");
+
+  legend.selectAll("*").remove();
+
+  keys.forEach(k => {
+    const row = legend.append("div")
+      .attr("class", "chart-legend-item");
+
+    row.append("div")
+      .attr("class", "chart-legend-dot")
+      .style("background", colorMap[k]);
+
+    row.append("div")
+      .text(k.charAt(0).toUpperCase() + k.slice(1));
+  });
+}
+
+drawLegendBox();
+
+
+const tip = d3.select("#chartTip");
+
+function showTip(html, event) {
+  tip.html(html)
+    .style("opacity", 1)
+    .style("left", `${event.offsetX}px`)
+    .style("top", `${event.offsetY}px`);
+}
+function moveTip(event) {
+  tip.style("left", `${event.offsetX}px`)
+     .style("top", `${event.offsetY}px`);
+}
+function hideTip() {
+  tip.style("opacity", 0);
+}
+
+async function downloadChartAsPDF() {
+  const area = document.getElementById("chartExportArea");
+  if (!area) {
+    console.error("Missing #chartExportArea");
+    return;
+  }
+
+  // hide tooltip so it doesn't appear in PDF
+  const tip = document.getElementById("chartTip");
+  const prevOpacity = tip ? tip.style.opacity : null;
+  if (tip) tip.style.opacity = 0;
+
+  // capture DOM → canvas (includes legendBox + SVG)
+  const canvas = await html2canvas(area, {
+    backgroundColor: "#ffffff",
+    scale: 2,
+    useCORS: true
+  });
+
+  if (tip && prevOpacity !== null) tip.style.opacity = prevOpacity;
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const { jsPDF } = window.jspdf;
+
+  // convert px → pt
+  const pxToPt = px => px * 0.75;
+  const pdfW = pxToPt(canvas.width);
+  const pdfH = pxToPt(canvas.height);
+
+  const pdf = new jsPDF({
+    orientation: pdfW >= pdfH ? "landscape" : "portrait",
+    unit: "pt",
+    format: [pdfW, pdfH]
+  });
+
+  pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+
+  const disease = (currentDisease || "chart").replace(/\s+/g, "_");
+  const page = (typeof currentPage === "number" ? currentPage + 1 : 1);
+
+
+  pdf.save(`RMOBI_${disease}_page${page}.pdf`);
+}
+
+
+document.getElementById("downloadPdfBtn")
+  ?.addEventListener("click", downloadChartAsPDF);
+
 </script>
+
+</body>

@@ -7,7 +7,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 + Bootswatch (Flatly) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css"
+      rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/site.css">
     <title>RMOBI </title>
     <!-- <link rel="apple-touch-icon" sizes="180x180" href="./assets/img/apple-touch-icon.png"> -->
@@ -17,6 +23,7 @@
 </head>
 
 <body>
+  <div class="page-bg">
   <div class="container-fluid">
 
   <header
@@ -83,7 +90,7 @@
 
   <!-- CARD 3 : Output -->
   <div class="card mb-4 shadow-sm">
-    <div class="card-body">
+    <div class="card-body ">
       <h2>Results & Output</h2>
       
 
@@ -133,7 +140,7 @@ All outputs can be visualized through an interactive D3.js network interface, al
 
   <!-- CARD 4 : Citation -->
   <div class="card mb-4 shadow-sm">
-    <div class="card-body">
+    <div class="card-body prose">
         <h2>Citation</h2>
         <p>Include citation details here when ready.</p>
     </div>
@@ -142,8 +149,12 @@ All outputs can be visualized through an interactive D3.js network interface, al
   <hr class="my-4" />
 
   </div>
-
+  <script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+  </script>
   <script type="module" src="./assets/js/site.js"></script>
+  
+</div>
 </body>
 
 </html>

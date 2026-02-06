@@ -6,8 +6,37 @@ const svg = d3.select("#graph");
 const g = svg.append("g");
 const tooltip = d3.select("#tooltip");
 
-svg.call(d3.zoom().scaleExtent([0.2, 8])
-    .on("zoom", (e) => g.attr("transform", e.transform)));
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 8])
+  .on("zoom", (e) => {
+    g.attr("transform", e.transform);
+  });
+
+svg.call(zoom);
+
+// Optional: disable dblclick zoom
+// svg.on("dblclick.zoom", null);
+
+const zoomStep = 1.2;
+
+// Zoom around the SVG center (feels pro)
+function zoomAtCenter(k) {
+  const node = svg.node();
+  if (!node) return;
+
+  const { width, height } = node.getBoundingClientRect();
+  const center = [width / 2, height / 2];
+
+  svg.transition().duration(180).call(zoom.scaleBy, k, center);
+}
+
+document.getElementById("zoom-in")?.addEventListener("click", () => {
+  zoomAtCenter(zoomStep);
+});
+
+document.getElementById("zoom-out")?.addEventListener("click", () => {
+  zoomAtCenter(1 / zoomStep);
+});
 
 let originalData = {}; 
 let currentGraphKey = "json/graph1.json"; 
@@ -185,6 +214,8 @@ function applyFiltersAndDraw() {
     });
         
     updateVisualization({ nodes: finalNodes, links: finalLinks });
+    const stats = computeGraphStats(finalNodes, finalLinks);
+    renderGraphStats(stats);
 }
 // -- Disable filters for Colocalization View ---
 function disableFiltersForColoView() {
@@ -673,6 +704,85 @@ async function downloadCurrentGraphAsPDF() {
   pdf.save(fileName);
 }
 
+function computeGraphStats(nodes, links) {
+  const nodeCount = nodes.length;
+
+  const argCount = nodes.reduce((acc, n) => acc + (n.isARG ? 1 : 0), 0);
+  const mgeCount = nodeCount - argCount;
+
+  const edgeCount = links.length;
+
+  // Based on link objects: type: "temporal" | "colocalization"
+  const colocCount = links.filter(e => e.type === "colocalization" || e.isColo).length;
+  const temporalCount = links.filter(e => e.type === "temporal").length;
+//   const colocCount = links.reduce((acc, e) => acc + (e.type === "colocalization" ? 1 : 0), 0);
+//   const temporalCount = links.reduce((acc, e) => acc + (e.type === "temporal" ? 1 : 0), 0);
+
+  return { nodeCount, argCount, mgeCount, edgeCount, colocCount, temporalCount };
+}
+
+function renderGraphStats(stats) {
+  document.getElementById("st-nodes").textContent = stats.nodeCount;
+  document.getElementById("st-arg").textContent = stats.argCount;
+  document.getElementById("st-mge").textContent = stats.mgeCount;
+
+  document.getElementById("st-edges").textContent = stats.edgeCount;
+  document.getElementById("st-coloc").textContent = stats.colocCount;
+  document.getElementById("st-temp").textContent = stats.temporalCount;
+}
+
+function restrictLinksToVisibleNodesRobust(visibleNodes, allLinks) {
+  const visible = new Set(visibleNodes.map(n => n.id));
+
+  return allLinks.filter(l => {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+    return visible.has(s) && visible.has(t);
+  });
+}
+
+const fab = document.getElementById("zoom-fab");
+const graphBox = document.getElementById("graph-container");
+
+function positionFab() {
+  if (!fab || !graphBox) return;
+
+  const r = graphBox.getBoundingClientRect();
+
+  const padding = 16; // inside the graph box
+  const fabWidth = fab.offsetWidth;
+  const fabHeight = fab.offsetHeight;
+
+  // Target: bottom-right INSIDE the graph box
+  let left = r.right - fabWidth - padding;
+  let top  = r.bottom - fabHeight - padding;
+
+  // Clamp so it never goes off the viewport
+  const minLeft = 8;
+  const minTop = 8;
+  const maxLeft = window.innerWidth - fabWidth - 8;
+  const maxTop = window.innerHeight - fabHeight - 8;
+
+  left = Math.max(minLeft, Math.min(left, maxLeft));
+  top  = Math.max(minTop, Math.min(top, maxTop));
+
+  fab.style.left = `${left}px`;
+  fab.style.top = `${top}px`;
+
+  // Optional: hide if graph is completely off-screen
+  const visible =
+    r.bottom > 0 &&
+    r.top < window.innerHeight &&
+    r.right > 0 &&
+    r.left < window.innerWidth;
+
+  fab.style.display = visible ? "flex" : "none";
+}
+
+// Update on scroll + resize + initial load
+window.addEventListener("scroll", positionFab, { passive: true });
+window.addEventListener("resize", positionFab);
+positionFab();
 
 
 
@@ -693,13 +803,13 @@ document.getElementById("downloadSvgBtn").addEventListener("click", downloadCurr
 document.getElementById("downloadPdfBtn").addEventListener("click", downloadCurrentGraphAsPDF);
 
 const legendOverlay = document.getElementById("legendOverlay");
-document.getElementById("toggleLegend").addEventListener("change", function() {
-	if (this.checked) {
-		legendOverlay.classList.add("visible");
-	} else {
-		legendOverlay.classList.remove("visible");
-	}
-});
+// document.getElementById("toggleLegend").addEventListener("change", function() {
+// 	if (this.checked) {
+// 		legendOverlay.classList.add("visible");
+// 	} else {
+// 		legendOverlay.classList.remove("visible");
+// 	}
+// });
 
 // --- INITIAL LOAD ---
 bindTimepointListeners();
