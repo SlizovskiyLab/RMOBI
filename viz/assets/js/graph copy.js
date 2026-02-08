@@ -1,17 +1,13 @@
 // Released under the GNU GPLv3; see LICENSE for details.
 // Developed by Boucher Lab and Slizovskiy Lab.
 
-/* 
-ENRICHMENT FUNCTIONS
-*/
-
 function getTimepointCategory(timepoint) {
   const t = Number(timepoint);
   if (t === 1000) return "donor";
   if (t === 0) return "pre";
   if (t > 0 && t < 31) return "post1";
   if (t > 30 && t < 61) return "post2";
-  if (t > 60) return "post3";
+  if (t > 60 && t < 1000) return "post3";
   return "unknown";
 }
 
@@ -21,34 +17,8 @@ function getTimepointColor(timepoint) {
   if (t === 0) return "red";
   if (t > 0 && t < 31) return "#99D2FF";
   if (t > 30 && t < 61) return "#4D9DFF";
-  if (t > 60) return "#3A6EFF";
+  if (t > 60 && t < 1000) return "#3A6EFF";
   return "green"; // fallback
-}
-
-function getMGEGroupShape(groupName) {
-  if (
-    groupName === "plasmid" ||
-    groupName === "Colicin_plasmid" ||
-    groupName === "Inc_plasmid"
-  ) {
-    return "diamond";
-  }
-  if (groupName === "prophage") {
-    return "hexagon";
-  }
-  if (groupName === "virus") {
-    return "triangle";
-  }
-  if (groupName === "ICE" || groupName === "ICEberg") {
-    return "octagon";
-  }
-  if (groupName === "replicon") {
-    return "parallelogram";
-  }
-  if (groupName === "likely IS/TE") {
-    return "trapezium";
-  }
-  return "box"; // default
 }
 
 function isPostCategory(tpCategory) {
@@ -71,22 +41,10 @@ function getPenWidth(weight) {
   return Math.min(10.0, penwidth);
 }
 
-function getDiseasesFromCounts(diseaseCounts) {
-  if (!diseaseCounts) return [];
-  return Object.keys(diseaseCounts);
-}
-
-
 function enrichNodes(nodes) {
   for (const n of nodes) {
     n.timepointCategory = getTimepointCategory(n.timepoint);
     n.color = getTimepointColor(n.timepoint);
-    if (!n.isARG) {
-        n.shape = getMGEGroupShape(n.mgeGroup);
-    } else {
-        n.shape = "circle";
-    }
-    n.diseases = getDiseasesFromCounts(n.diseaseCounts);
   }
   return nodes;
 }
@@ -132,14 +90,11 @@ function enrichLinks(links, nodeById /* optional */) {
   return links;
 }
 
-/********************************************************************/ 
+
 
 // --- D3 Setup ---
 const svg = d3.select("#graph");
-const g = svg.select("g.main")
-  .empty()
-  ? svg.append("g").attr("class", "main")
-  : svg.select("g.main");
+const g = svg.append("g");
 const tooltip = d3.select("#tooltip");
 
 const zoom = d3.zoom()
@@ -155,7 +110,7 @@ svg.call(zoom);
 
 const zoomStep = 1.2;
 
-// Zoom around the SVG center (feels pro)
+// Zoom around the SVG center
 function zoomAtCenter(k) {
   const node = svg.node();
   if (!node) return;
@@ -288,11 +243,7 @@ function resetSingleDropdown(hiddenSelector, labelText) {
 function applyFiltersAndDraw() {
     if (!originalData[currentGraphKey]) return;
 
-    let data = JSON.parse(JSON.stringify(originalData[currentGraphKey]));
-    
-    enrichNodes(data.nodes);
-    const nodeById = new Map(data.nodes.map(n => [n.id, n]));
-    enrichLinks(data.links, nodeById);
+    let data = JSON.parse(JSON.stringify(originalData[currentGraphKey])); 
 
     const filters = {
         disease: d3.select("#diseaseFilter").property("value"),
@@ -370,6 +321,7 @@ function enableAllFilters() {
     d3.select("#mgeSearch").attr("disabled", null);
     d3.select("#toggleColo").attr("disabled", null);
 }
+
 
 // --- FILTERING HELPERS ---
 function getStrictlyFilteredNodeIds(nodes, links, filters) {
@@ -464,35 +416,6 @@ function getNeighborIds(links, seedNodeIds) {
         if (seedNodeIds.has(targetId)) neighborIds.add(sourceId);
     });
     return neighborIds;
-}
-
-// --- CENTERING FUNCTION ---
-function centerOnNodes(svg, zoom, nodes, width, height) {
-  if (!nodes || nodes.length === 0) return;
-
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-  for (const n of nodes) {
-    if (!isFinite(n.x) || !isFinite(n.y)) continue;
-    if (n.x < minX) minX = n.x;
-    if (n.y < minY) minY = n.y;
-    if (n.x > maxX) maxX = n.x;
-    if (n.y > maxY) maxY = n.y;
-  }
-
-  if (!isFinite(minX)) return;
-
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-
-  // get current zoom scale, keep it
-  const t = d3.zoomTransform(svg.node());
-  const k = t.k;
-
-  const tx = width / 2 - cx * k;
-  const ty = height / 2 - cy * k;
-
-  svg.transition().duration(350).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
 }
 
 
@@ -648,6 +571,7 @@ function updateVisualization(data) {
 }
 
 
+
 function linkArc(d) {
     const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y);
     return `M${d.source.x},${d.source.y}A${r},${r} 0 0,1 ${d.target.x},${d.target.y}`;
@@ -792,7 +716,7 @@ function downloadCurrentGraphAsSVG() {
   URL.revokeObjectURL(url);
 }
 
-// --- PDF DOWNLOAD ---
+
 async function downloadCurrentGraphAsPDF() {
   const svgEl = document.querySelector("#graph");        // your <svg id="graph">
   if (!svgEl) return;
@@ -871,7 +795,6 @@ async function downloadCurrentGraphAsPDF() {
   pdf.save(fileName);
 }
 
-// --- GRAPH STATISTICS ---
 function computeGraphStats(nodes, links) {
   const nodeCount = nodes.length;
 
@@ -881,8 +804,8 @@ function computeGraphStats(nodes, links) {
   const edgeCount = links.length;
 
   // Based on link objects: type: "temporal" | "colocalization"
-  const colocCount = links.filter(e => e.type === "colocalization" || e.isColo).length;
-  const temporalCount = links.filter(e => e.type === "temporal").length;
+  const colocCount = links.filter(e => e.isColo).length;
+  const temporalCount = links.filter(e => !e.isColo).length;
 //   const colocCount = links.reduce((acc, e) => acc + (e.type === "colocalization" ? 1 : 0), 0);
 //   const temporalCount = links.reduce((acc, e) => acc + (e.type === "temporal" ? 1 : 0), 0);
 
@@ -912,8 +835,6 @@ function restrictLinksToVisibleNodesRobust(visibleNodes, allLinks) {
 const fab = document.getElementById("zoom-fab");
 const graphBox = document.getElementById("graph-container");
 
-
-// --- FLOATING ACTION BUTTON POSITIONING TO BOTTOM---
 function positionFab() {
   if (!fab || !graphBox) return;
 

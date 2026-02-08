@@ -54,7 +54,13 @@
 
       <div class="d-flex align-items-center gap-2">
         <select id="diseaseSelect" class="form-select form-select-sm" style="min-width: 320px;"></select>
-
+        <select id="statusSelect" class="form-select form-select-sm" style="min-width: 220px;">
+        <option value="all" selected>All statuses</option>
+        <option value="persisted">Persisted</option>
+        <option value="emerged">Emerged</option>
+        <option value="disappeared">Disappeared</option>
+        <option value="transferred">Transferred</option>
+      </select>
         <div class="btn-group btn-group-sm" role="group" aria-label="pagination">
           <button id="prevBtn" class="btn btn-outline-secondary">◀</button>
           <button id="nextBtn" class="btn btn-outline-secondary">▶</button>
@@ -73,6 +79,23 @@
   </div>
 
 </div>
+
+<div class="card shadow-sm border-0 mb-5 overflow-hidden">
+  <div class="p-3 border-bottom bg-white">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <h5 class="mb-0 fw-semibold">Status Flow Across Phases</h5>
+        <div class="text-muted small mt-1">Patient counts moving between phases by status.</div>
+      </div>
+      <select id="sankeyDiseaseSelect" class="form-select form-select-sm" style="min-width: 320px;"></select>
+    </div>
+  </div>
+
+  <div class="card-body p-0 position-relative">
+    <svg id="sankeySvg" width="100%" height="420"></svg>
+  </div>
+</div>
+
 
 
 
@@ -112,24 +135,14 @@ const svg = d3.select("#chartSvg")
 const g = svg.append("g")
   .attr("transform", `translate(${margin.left},${margin.top})`);
 
-// const legendG = svg.append("g")
-//   .attr("class", "legend")
-//   .attr("transform", `translate(${width - 200}, 25)`);
+let activeStatus = "all";
 
-// function drawLegend() {
-//   legendG.selectAll("*").remove();
-//   keys.forEach((k, i) => {
-//     legendG.append("rect")
-//       .attr("x", 0).attr("y", i * 22)
-//       .attr("width", 16).attr("height", 16)
-//       .attr("fill", colorMap[k]);
-//     legendG.append("text")
-//       .attr("x", 24).attr("y", i * 22 + 12)
-//       .attr("class", "text-dark small fw-medium")
-//       .text(k.charAt(0).toUpperCase() + k.slice(1));
-//   });
-// }
-// drawLegend();
+function getActiveKeys() {
+  if (activeStatus === "all") return keys;
+  return [activeStatus];
+}
+
+
 
 // --- State for current disease + pagination + cached processed data ---
 let RAW = null;
@@ -139,7 +152,7 @@ let sorted = [];
 let totalPages = 1;
 let yDomainMax = 5;
 
-function preprocessDisease(disease) {
+function preprocessDisease(disease, activeKeys) {
   const data = RAW[disease].map(d => ({
     colocalization: d.colocalization,
     status: (d.status || "").toLowerCase(),
@@ -155,15 +168,24 @@ function preprocessDisease(disease) {
 
   const combined = aggPairs.map(([coloc, statusMap]) => {
     const obj = { colocalization: coloc };
-    statusMap.forEach(([s, c]) => obj[s] = c);
-    obj.total = d3.sum(statusMap, ([, c]) => c);
+    statusMap.forEach(([s, c]) => (obj[s] = c));
+
+    // 🔹 filtered total (rank 기준)
+    obj.viewTotal = activeKeys.reduce((sum, k) => sum + (Number(obj[k]) || 0), 0);
+
+    // optional: still keep overall total if you want
+    obj.total = Object.values(obj)
+      .filter(v => typeof v === "number")
+      .reduce((a, b) => a + b, 0);
+
     return obj;
-  }).filter(d => d.total > 0);
+  }).filter(d => d.viewTotal > 0);  // only keep non-zero for selected status
 
-  const sortedLocal = combined.sort((a, b) => d3.descending(a.total, b.total));
+  // 🔹 Sort by filtered total
+  const sortedLocal = combined.sort((a, b) => d3.descending(a.viewTotal, b.viewTotal));
 
-  const diseaseMax = d3.max(sortedLocal, d => d.total) || 1;
-  const yMax = Math.max(diseaseMax, 5);
+  const maxVal = d3.max(sortedLocal, d => d.viewTotal) || 1;
+  const yMax = Math.max(maxVal, 5);
 
   return { sortedLocal, yMax };
 }
@@ -178,6 +200,8 @@ function drawPage() {
 
   const start = currentPage * pageSize;
   const pageData = sorted.slice(start, start + pageSize);
+
+  const activeKeys = getActiveKeys();
 
   const displayName = diseaseNames[currentDisease] || currentDisease;
   d3.select("#chartTitle").text(displayName);
@@ -194,8 +218,7 @@ function drawPage() {
     setButtonsDisabled();
     return;
   }
-
-  const stacked = d3.stack().keys(keys)(pageData);
+  const stacked = d3.stack().keys(activeKeys)(pageData);
 
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
@@ -286,7 +309,7 @@ function drawPage() {
       d3.select(this).attr("opacity", 0.85);
 
       const segment = Math.round(d[1] - d[0]);
-      const total = d.data.total;
+      const total = d.data.viewTotal;
       const pct = total ? ((segment / total) * 100).toFixed(1) : "0.0";
 
       showTip(
@@ -312,12 +335,11 @@ function drawPage() {
       .attr("class", "total-label")
       .attr("text-anchor", "middle")
       .attr("x", d => x(d.colocalization) + x.bandwidth() / 2)
-      .attr("y", d => y(d.total) - 6)
+      .attr("y", d => y(d.viewTotal) - 6)
       .style("font-size", "11px")
       .style("font-weight", 700)
       .style("fill", "#111827")
-      .text(d => d3.format(",")(d.total));
-
+      .text(d => d3.format(",")(d.viewTotal));
 // --- SEGMENT labels inside stacks ---
 const minLabelHeightPx = 14; // hide labels for tiny segments
 
@@ -351,13 +373,35 @@ function setDisease(disease) {
   currentDisease = disease;
   currentPage = 0;
 
-  const { sortedLocal, yMax } = preprocessDisease(disease);
+  const activeKeys = getActiveKeys();
+  const { sortedLocal, yMax } = preprocessDisease(disease, activeKeys);
+
   sorted = sortedLocal;
   yDomainMax = yMax;
   totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
 
+  drawLegendBox();
   drawPage();
 }
+
+
+
+d3.select("#statusSelect").on("change", function () {
+  activeStatus = this.value;
+  currentPage = 0;
+
+  const activeKeys = getActiveKeys();
+  const { sortedLocal, yMax } = preprocessDisease(currentDisease, activeKeys);
+
+  sorted = sortedLocal;
+  yDomainMax = yMax;
+  totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+
+  drawLegendBox();
+  drawPage();
+});
+
+
 
 // Pagination handlers (one set)
 d3.select("#nextBtn").on("click", () => {
@@ -399,7 +443,9 @@ function drawLegendBox() {
 
   legend.selectAll("*").remove();
 
-  keys.forEach(k => {
+  const activeKeys = getActiveKeys();
+
+  activeKeys.forEach(k => {
     const row = legend.append("div")
       .attr("class", "chart-legend-item");
 
