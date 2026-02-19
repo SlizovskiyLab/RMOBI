@@ -175,12 +175,24 @@
                         </div> -->
                         <!-- Download Button -->
                         <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-outline-dark" id="downloadSvgBtn">
-                             SVG
+                        <!-- <button class="btn btn-outline-dark" id="downloadSvgBtn">
+                               <span class="icon-download-black"></span>
+                               SVG
                         </button>
                         <button type="button" class="btn btn-outline-dark" id="downloadPdfBtn">
+                             <span class="icon-download-black"></span>
                              PDF
+                        </button> -->
+                        <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadSvgBtn">
+                        <svg class="rmobi-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+                        SVG
                         </button>
+
+                        <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadPdfBtn">
+                        <svg class="rmobi-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+                        PDF
+                        </button>
+
                     </div>
                     </div>
                 </div>
@@ -229,15 +241,15 @@
     
     <div id="graph-container">
         <div id="graph-stats" class="graph-stats">
-        <div class="stat"><span class="k">Nodes</span><span id="st-nodes" class="v">0</span></div>
-        <div class="stat"><span class="k">ARG</span><span id="st-arg" class="v">0</span></div>
-        <div class="stat"><span class="k">MGE</span><span id="st-mge" class="v">0</span></div>
+        <div class="stat" id="stat-nodes"><span class="k">Nodes</span><span id="st-nodes" class="v">0</span></div>
+        <div class="stat" id="stat-arg"><span class="k">ARG</span><span id="st-arg" class="v">0</span></div>
+        <div class="stat" id="stat-mge"><span class="k">MGE</span><span id="st-mge" class="v">0</span></div>
 
-        <div class="divider"></div>
+        <div class="divider" id="stats-divider"></div>
 
-        <div class="stat"><span class="k">Edges</span><span id="st-edges" class="v">0</span></div>
-        <div class="stat"><span class="k">Colocolization</span><span id="st-coloc" class="v">0</span></div>
-        <div class="stat"><span class="k">Temporal</span><span id="st-temp" class="v">0</span></div>
+        <div class="stat" id="stat-edges"><span class="k">Edges</span><span id="st-edges" class="v">0</span></div>
+        <div class="stat" id="stat-coloc"><span class="k">Colocalization</span><span id="st-coloc" class="v">0</span></div>
+        <div class="stat" id="stat-temp"><span class="k">Temporal</span><span id="st-temp" class="v">0</span></div>
         </div>
         <div class="card mb-4 shadow-sm">
             <svg id="graph" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>

@@ -3,7 +3,7 @@
 /* --- Global Typography Improvements --- */
 body, html {
     font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
-    font-size: 16px;
+    font-size: 12px;
     line-height: 1.55;
     background: #d6d8db; /* light neutral gray */
 }
@@ -62,15 +62,15 @@ ul.clean-list li strong {
 
 /* Page background */
 .page-bg {
-  min-height: 100vh;
+  min-height: 120vh;
   background: linear-gradient(
     180deg,
     #f8fafc 0%,
     #eef2f7 100%
   );
 
-  border-radius: 20px;        /* curved edges */
-  padding: 24px;
+  border-radius: 15px;        /* curved edges */
+  padding: 18px;
   padding-bottom: 2rem;
 
   box-shadow:
@@ -121,6 +121,7 @@ ul.clean-list li strong {
   outline-offset: 3px;
 }
 
+
 .mini-legend-panel {
   background: rgba(255,255,255,0.7);
   border: 1px solid rgba(0,0,0,0.08);
@@ -140,6 +141,17 @@ ul.clean-list li strong {
   align-items: center;
   gap: 10px;
   white-space: nowrap;
+}
+
+.rmobi-icon{
+  width:16px;
+  height:16px;
+  vertical-align:-2px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 
@@ -167,14 +179,14 @@ ul.clean-list li strong {
 /* Legend pills */
 .chart-legend-box{
   position: absolute;
-  top: 14px;
+  top: 220px;
   right: 20px;
   background: rgba(255,255,255,0.96);
   border: 1px solid #dee2e6;
   border-radius: 10px;
   padding: 10px 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  font-size: 16px;
+  font-size: 24px;
 }
 .chart-legend-item{
   display: flex;

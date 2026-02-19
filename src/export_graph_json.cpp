@@ -48,6 +48,17 @@ auto timepointOrder = [](Timepoint tp) -> int {
     return static_cast<int>(tp);
 };
 
+//ordering/adjacency decisions (Donor < PreFMT < PostFMT)
+static inline int tpSort(Timepoint tp) {
+    return timepointOrder(tp);
+}
+
+static inline int tpJson(Timepoint tp) {
+    const int v = static_cast<int>(tp);
+    return v;
+}
+
+
 std::string getLabel(const Node& node) {
     std::string label = node.isARG ? getARGName(node.id) : getMGENameForLabel(node.id);
     return label;
@@ -148,89 +159,167 @@ bool exportParentGraphToJson(const Graph& g,
     j["nodes"] = json::array();
     j["links"] = json::array();
 
-    struct ParentNodeInfo {
-        std::string name;
-        Timepoint tp;
-        int argId;
-        int mgeId;
+    auto timepointOrder = [](Timepoint tp) -> int {
+        if (tp == Timepoint::Donor) return -1;
+        if (tp == Timepoint::PreFMT) return 0;
+        return static_cast<int>(tp);
     };
 
-    int colocCounter = 0;
+    // (argId, mgeId, tp) -> Parent_X
+    int counter = 0;
     std::map<std::tuple<int,int,Timepoint>, std::string> uniqueParents;
-    std::map<std::pair<int,int>, std::vector<ParentNodeInfo>> colocMap;
 
+    // Aggregation for node payload
+    std::map<std::tuple<int,int,Timepoint>, std::string> labelByKey;
+    std::map<std::tuple<int,int,Timepoint>, std::string> mgeGroupByKey;
+    std::map<std::tuple<int,int,Timepoint>, std::map<std::string, std::set<int>>> diseaseToPatientsByKey;
+
+    // patient -> (arg,mge) -> set<tp>
+    std::map<int, std::map<std::pair<int,int>, std::set<Timepoint>>> nodesByPatient;
+
+    // 0) Build nodesByPatient from ALL colocalization edges (same idea as addTemporalEdges)
     for (const Edge& edge : g.edges) {
         if (!edge.isColo) continue;
 
+        // Determine which endpoint is ARG/MGE
         const Node& argNode = edge.source.isARG ? edge.source : edge.target;
         const Node& mgeNode = edge.source.isARG ? edge.target : edge.source;
 
-        int argId = argNode.id;
-        int mgeId = mgeNode.id;
-        Timepoint tp = argNode.timepoint;
+        for (int patientID : edge.individuals) {
+            // Only record the ARG–MGE pair at THIS timepoint for this patient.
+            nodesByPatient[patientID][{argNode.id, mgeNode.id}].insert(argNode.timepoint);
+        }
+    }
 
-        auto key = std::make_tuple(argId, mgeId, tp);
-        if (!uniqueParents.count(key)) {
-            std::string parentName = "Parent_" + std::to_string(++colocCounter);
-            uniqueParents[key] = parentName;
+    // 1) Create parent nodes for every (arg,mge,tp) implied by patient presence
+    //    This guarantees donor nodes exist too, if donor is present for any patient.
+    for (const auto& [patientID, pairMap] : nodesByPatient) {
+        for (const auto& [pairKey, tpSet] : pairMap) {
+            const int argId = pairKey.first;
+            const int mgeId = pairKey.second;
 
-            std::string groupName = getMGEGroupName(mgeId);
-            std::string label = showLabels ? (getARGName(argId) + "+" + getMGENameForLabel(mgeId)) : "";
+            for (Timepoint tp : tpSet) {
+                auto key = std::make_tuple(argId, mgeId, tp);
+                if (!uniqueParents.count(key)) {
+                    uniqueParents[key] = "Parent_" + std::to_string(++counter);
+                    mgeGroupByKey[key] = getMGEGroupName(mgeId);
+                    labelByKey[key] = showLabels
+                        ? (getARGName(argId) + "+" + getMGENameForLabel(mgeId))
+                        : "";
+                }
 
-            // disease -> unique patientIDs for THIS colocalization/timepoint
-            std::map<std::string, std::set<int>> diseaseToIndividualsLocal;
-            for (int patientID : edge.individuals) {
-                auto it = patientToDiseaseMap.find(patientID);
-                if (it != patientToDiseaseMap.end()) {
-                    diseaseToIndividualsLocal[it->second].insert(patientID);
+                // diseaseCounts: count unique patients per disease at this (arg,mge,tp)
+                auto itDis = patientToDiseaseMap.find(patientID);
+                if (itDis != patientToDiseaseMap.end()) {
+                    diseaseToPatientsByKey[key][itDis->second].insert(patientID);
+                }
+            }
+        }
+    }
+
+    // 2) Emit nodes (same JSON structure)
+    for (const auto& [key, parentName] : uniqueParents) {
+        const int argId = std::get<0>(key);
+        const int mgeId = std::get<1>(key);
+        const Timepoint tp = std::get<2>(key);
+
+        json diseaseCounts = json::object();
+        auto itCounts = diseaseToPatientsByKey.find(key);
+        if (itCounts != diseaseToPatientsByKey.end()) {
+            for (const auto& [diseaseName, patients] : itCounts->second) {
+                diseaseCounts[diseaseName] = static_cast<int>(patients.size());
+            }
+        }
+
+        j["nodes"].push_back({
+            {"id", parentName},
+            {"label", labelByKey[key]},
+            {"argId", argId},
+            {"mgeId", mgeId},
+            {"timepoint", tpJson(tp)},   // numeric, safe
+            {"mgeGroup", mgeGroupByKey[key]},
+            {"diseaseCounts", diseaseCounts}
+        });
+    }
+
+    // 3) Patient-specific temporal edges: ONLY adjacent phases
+    //    - Donor->Pre if exists
+    //    - Donor->Post if Pre missing but Post exists
+    //    - Pre->Post if exists
+    //
+    // Dedup identical parent edges (since JSON can't store patientID).
+    std::set<std::tuple<std::string,std::string,int,int>> emittedTemporal;
+
+    auto hasTp = [](const std::set<Timepoint>& s, Timepoint tp) {
+        return s.find(tp) != s.end();
+    };
+
+    for (const auto& [patientID, pairMap] : nodesByPatient) {
+        (void)patientID;
+
+        for (const auto& [pairKey, tpSet] : pairMap) {
+            const int argId = pairKey.first;
+            const int mgeId = pairKey.second;
+
+            const bool hasDonor = hasTp(tpSet, Timepoint::Donor);
+            const bool hasPre   = hasTp(tpSet, Timepoint::PreFMT);
+
+            // We treat "Post" as any tp that is neither Donor nor PreFMT.
+            // If you have multiple post timepoints (e.g., 7,14,65,...) you likely want adjacency across those too.
+            // We'll handle that by collecting post tps and linking Pre->firstPost, and chain post->post.
+            std::vector<Timepoint> postTps;
+            for (Timepoint tp : tpSet) {
+                if (tp != Timepoint::Donor && tp != Timepoint::PreFMT) postTps.push_back(tp);
+            }
+            std::sort(postTps.begin(), postTps.end(),
+                      [&](Timepoint a, Timepoint b){ return timepointOrder(a) < timepointOrder(b); });
+
+            auto emit = [&](Timepoint srcTp, Timepoint tgtTp) {
+                auto srcKey = std::make_tuple(argId, mgeId, srcTp);
+                auto tgtKey = std::make_tuple(argId, mgeId, tgtTp);
+
+                auto itS = uniqueParents.find(srcKey);
+                auto itT = uniqueParents.find(tgtKey);
+                if (itS == uniqueParents.end() || itT == uniqueParents.end()) return;
+
+                const std::string& sName = itS->second;
+                const std::string& tName = itT->second;
+
+                auto dk = std::make_tuple(sName, tName, timepointOrder(srcTp), timepointOrder(tgtTp));
+                if (emittedTemporal.count(dk)) return;
+                emittedTemporal.insert(dk);
+
+                j["links"].push_back({
+                    {"source", sName},
+                    {"target", tName},
+                    {"isColo", false},
+                    {"sourceTimepoint", tpJson(srcTp)},
+                    {"targetTimepoint", tpJson(tgtTp)}
+                });
+            };
+
+            // Donor -> Pre OR Donor -> firstPost (if Pre missing)
+            if (hasDonor) {
+                if (hasPre) {
+                    emit(Timepoint::Donor, Timepoint::PreFMT);
+                } else if (!postTps.empty()) {
+                    emit(Timepoint::Donor, postTps.front()); // Donor->Post when Pre missing
                 }
             }
 
-            // disease -> count (unique)
-            json diseaseCounts = json::object();
-            for (const auto& [diseaseName, individuals] : diseaseToIndividualsLocal) {
-                diseaseCounts[diseaseName] = static_cast<int>(individuals.size());
+            // Pre -> firstPost
+            if (hasPre && !postTps.empty()) {
+                emit(Timepoint::PreFMT, postTps.front());
             }
 
-            j["nodes"].push_back({
-                {"id",        parentName},
-                {"label",     label},
-                {"argId",     argId},
-                {"mgeId",     mgeId},
-                {"timepoint", static_cast<int>(tp)},
-                {"mgeGroup",  groupName},
-                {"diseaseCounts", diseaseCounts}
-            });
-        }
-
-        auto pairKey = std::make_pair(argId, mgeId);
-        colocMap[pairKey].push_back({uniqueParents[key], tp, argId, mgeId});
-    }
-
-    // Temporal links between parent nodes (data-only)
-    for (auto& entry : colocMap) {
-        auto& parentNodes = entry.second;
-
-        std::sort(parentNodes.begin(), parentNodes.end(),
-            [&](const ParentNodeInfo& a, const ParentNodeInfo& b) {
-                return timepointOrder(a.tp) < timepointOrder(b.tp);
-            });
-
-        for (size_t i = 0; i + 1 < parentNodes.size(); ++i) {
-            if (parentNodes[i].tp == parentNodes[i+1].tp || parentNodes[i].name == parentNodes[i+1].name) {
-                continue;
+            // Chain posts: post[i] -> post[i+1]
+            for (size_t i = 0; i + 1 < postTps.size(); ++i) {
+                emit(postTps[i], postTps[i+1]);
             }
-
-            j["links"].push_back({
-                {"source", parentNodes[i].name},
-                {"target", parentNodes[i+1].name},
-                {"isColo", false},
-                {"sourceTimepoint", static_cast<int>(parentNodes[i].tp)},
-                {"targetTimepoint", static_cast<int>(parentNodes[i+1].tp)}
-            });
         }
     }
 
+    // 4) Write
     std::ofstream out(outPathStr);
     if (!out) {
         std::cerr << "[exportParentGraphToJson] Cannot open " << outPathStr << " for write\n";
@@ -243,6 +332,7 @@ bool exportParentGraphToJson(const Graph& g,
               << " to " << outPathStr << "\n";
     return true;
 }
+
 
 
 // void exportColocalizationsToJSONByDisease(

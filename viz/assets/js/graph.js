@@ -191,6 +191,7 @@ function loadAndRenderGraph(fileKey) {
     } else {
         enableAllFilters();
     }
+    updateGraphStatsVisibility();
     if (originalData[fileKey]) {
         populateFilters(originalData[fileKey]);
         applyFiltersAndDraw();
@@ -889,6 +890,8 @@ function computeGraphStats(nodes, links) {
   return { nodeCount, argCount, mgeCount, edgeCount, colocCount, temporalCount };
 }
 
+
+
 function renderGraphStats(stats) {
   document.getElementById("st-nodes").textContent = stats.nodeCount;
   document.getElementById("st-arg").textContent = stats.argCount;
@@ -897,6 +900,36 @@ function renderGraphStats(stats) {
   document.getElementById("st-edges").textContent = stats.edgeCount;
   document.getElementById("st-coloc").textContent = stats.colocCount;
   document.getElementById("st-temp").textContent = stats.temporalCount;
+}
+
+function updateGraphStatsVisibility() {
+  const dataset = document.getElementById("dataset")?.value || "";
+  const isColoc = dataset.includes("graph2");
+
+  // elements
+  const show = (id, v) =>
+    document.getElementById(id)?.classList.toggle("d-none", !v);
+
+  if (isColoc) {
+    // Only Nodes + Edges
+    show("stat-nodes", true);
+    show("stat-edges", true);
+
+    show("stat-arg", false);
+    show("stat-mge", false);
+    show("stat-coloc", false);
+    show("stat-temp", false);
+    show("stat-divider", false);
+  } else {
+    // Full stats
+    show("stat-nodes", true);
+    show("stat-edges", true);
+    show("stat-arg", true);
+    show("stat-mge", true);
+    show("stat-coloc", true);
+    show("stat-temp", true);
+    show("stat-divider", true);
+  }
 }
 
 function restrictLinksToVisibleNodesRobust(visibleNodes, allLinks) {
@@ -985,4 +1018,5 @@ const legendOverlay = document.getElementById("legendOverlay");
 bindTimepointListeners();
 loadAndRenderGraph(currentGraphKey);
 updateTimepointButtonText();
+updateGraphStatsVisibility();
 

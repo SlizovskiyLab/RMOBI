@@ -78,9 +78,9 @@ int main() {
 
     // /************************************* Graph Visualization ***********************************/
 
-    Graph amrGraphNet = g;
-    exportGraphToJsonSimple(amrGraphNet, interaction_json_path.string(), patientToDiseaseMap);
-    exportParentGraphToJson(amrGraphNet, parent_json_path.string(), patientToDiseaseMap, true);
+    Graph rmobi = g;
+    exportGraphToJsonSimple(rmobi, interaction_json_path.string(), patientToDiseaseMap);
+    exportParentGraphToJson(rmobi, parent_json_path.string(), patientToDiseaseMap, true);
     exportColocalizationsToJSONByDisease(colocalizationByIndividual, patientToDiseaseMap, temporal_dynamics_json_path.string());
 
 
