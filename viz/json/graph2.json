@@ -8500,7 +8500,7 @@
       },
       "id": "Parent_3513",
       "label": "ANT3-DPRIME+gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "mgeId": 1552,
       "timepoint": 0
     },
@@ -8511,7 +8511,7 @@
       },
       "id": "Parent_4106",
       "label": "ANT3-DPRIME+gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "mgeId": 1552,
       "timepoint": 6
     },
@@ -11404,7 +11404,7 @@
       },
       "id": "Parent_3557",
       "label": "ARSCM+gene:plasmid:77695",
-      "mgeGroup": "gene:plasmid:77695",
+      "mgeGroup": "plasmid",
       "mgeId": 2062,
       "timepoint": 0
     },
@@ -12208,7 +12208,7 @@
       },
       "id": "Parent_3144",
       "label": "ARSRM+gene:plasmid:30991",
-      "mgeGroup": "gene:plasmid:30991",
+      "mgeGroup": "plasmid",
       "mgeId": 2060,
       "timepoint": 0
     },
@@ -12219,7 +12219,7 @@
       },
       "id": "Parent_3145",
       "label": "ARSRM+gene:plasmid:77695",
-      "mgeGroup": "gene:plasmid:77695",
+      "mgeGroup": "plasmid",
       "mgeId": 2062,
       "timepoint": 15
     },
@@ -34279,7 +34279,7 @@
       },
       "id": "Parent_6453",
       "label": "ERMB+gene:plasmid:28967",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "mgeId": 2053,
       "timepoint": 0
     },
@@ -34290,7 +34290,7 @@
       },
       "id": "Parent_6086",
       "label": "ERMB+gene:plasmid:28967",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "mgeId": 2053,
       "timepoint": 1000
     },
@@ -34378,7 +34378,7 @@
       },
       "id": "Parent_7183",
       "label": "ERMC+gene:plasmid:19874",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "mgeId": 1903,
       "timepoint": 0
     },
@@ -51595,7 +51595,7 @@
       },
       "id": "Parent_4331",
       "label": "MERR1+gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "mgeId": 1552,
       "timepoint": 408
     },
@@ -52123,7 +52123,7 @@
       },
       "id": "Parent_6035",
       "label": "MERR2+gene:plasmid:154450",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "mgeId": 1699,
       "timepoint": 0
     },

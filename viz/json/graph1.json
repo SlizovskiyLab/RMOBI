@@ -108746,7 +108746,7 @@
       "id": "N_1699_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:154450",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -117244,7 +117244,7 @@
       "id": "N_2053_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:28967",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -117293,7 +117293,7 @@
       "id": "N_2053_MGE_1000",
       "isARG": false,
       "label": "gene:plasmid:28967",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "timepoint": 1000
     },
     {
@@ -138566,7 +138566,7 @@
       "id": "N_2062_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:77695",
-      "mgeGroup": "gene:plasmid:77695",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -141744,7 +141744,7 @@
       "id": "N_1552_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -142311,7 +142311,7 @@
       "id": "N_1903_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:19874",
-      "mgeGroup": "UNCLASSIFIED",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -143102,7 +143102,7 @@
       "id": "N_2062_MGE_15",
       "isARG": false,
       "label": "gene:plasmid:77695",
-      "mgeGroup": "gene:plasmid:77695",
+      "mgeGroup": "plasmid",
       "timepoint": 15
     },
     {
@@ -144278,7 +144278,7 @@
       "id": "N_1552_MGE_6",
       "isARG": false,
       "label": "gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "timepoint": 6
     },
     {
@@ -146434,7 +146434,7 @@
       "id": "N_2060_MGE_0",
       "isARG": false,
       "label": "gene:plasmid:30991",
-      "mgeGroup": "gene:plasmid:30991",
+      "mgeGroup": "plasmid",
       "timepoint": 0
     },
     {
@@ -146854,7 +146854,7 @@
       "id": "N_1552_MGE_408",
       "isARG": false,
       "label": "gene:plasmid:151429",
-      "mgeGroup": "gene:plasmid:151429",
+      "mgeGroup": "plasmid",
       "timepoint": 408
     },
     {

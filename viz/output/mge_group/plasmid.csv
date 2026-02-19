@@ -90,6 +90,8 @@ ANT3-DPRIME,gene:plasmid:151275,0,1,0,1
 ANT3-DPRIME,gene:plasmid:151286,0,0,1,1
 ANT3-DPRIME,gene:plasmid:151291,0,0,1,1
 ANT3-DPRIME,gene:plasmid:151291,0,1,0,1
+ANT3-DPRIME,gene:plasmid:151429,0,0,1,1
+ANT3-DPRIME,gene:plasmid:151429,0,1,0,1
 ANT3-DPRIME,gene:plasmid:15989,0,0,1,1
 ANT3-DPRIME,gene:plasmid:19399,0,0,1,1
 ANT3-DPRIME,gene:plasmid:19401,0,0,1,1
@@ -244,6 +246,7 @@ ARSCM,gene:plasmid:24697,0,1,0,1
 ARSCM,gene:plasmid:24698,0,1,0,2
 ARSCM,gene:plasmid:24699,0,1,0,1
 ARSCM,gene:plasmid:27818,0,0,1,1
+ARSCM,gene:plasmid:77695,0,1,0,1
 ARSCM,gene:plasmid:88431,0,1,0,1
 ARSCM,gene:plasmid:88432,0,1,0,1
 ARSCM,gene:plasmid:88433,0,1,0,1
@@ -304,6 +307,8 @@ ARSRM,gene:plasmid:24698,0,1,0,1
 ARSRM,gene:plasmid:24699,0,0,1,1
 ARSRM,gene:plasmid:24699,0,1,0,1
 ARSRM,gene:plasmid:24852,0,1,0,1
+ARSRM,gene:plasmid:30991,0,1,0,1
+ARSRM,gene:plasmid:77695,0,0,1,1
 ARSRM,gene:plasmid:88298,0,0,1,1
 ARSRM,gene:plasmid:88298,0,1,0,2
 ARSRM,gene:plasmid:88299,0,0,1,1
@@ -923,10 +928,13 @@ ERMB,gene:plasmid:15563,0,0,1,1
 ERMB,gene:plasmid:156386,0,0,1,1
 ERMB,gene:plasmid:156401,0,0,1,1
 ERMB,gene:plasmid:17097,0,0,1,4
+ERMB,gene:plasmid:28967,0,1,0,1
+ERMB,gene:plasmid:28967,1,0,0,1
 ERMB,gene:plasmid:28968,0,0,1,3
 ERMB,gene:plasmid:28968,0,1,0,1
 ERMB,gene:plasmid:28968,1,0,0,2
 ERMC,gene:plasmid:138607,0,1,0,1
+ERMC,gene:plasmid:19874,0,1,0,1
 ERMF,gene:plasmid:13202,1,0,0,1
 ERMF,gene:plasmid:133364,1,0,0,1
 ERMF,gene:plasmid:133366,1,0,0,1
@@ -1247,6 +1255,7 @@ MERR1,gene:plasmid:151273,0,0,1,1
 MERR1,gene:plasmid:151274,0,0,1,1
 MERR1,gene:plasmid:151275,0,0,1,1
 MERR1,gene:plasmid:151291,0,0,1,1
+MERR1,gene:plasmid:151429,0,0,1,1
 MERR1,gene:plasmid:19401,0,0,1,1
 MERR1,gene:plasmid:19402,0,0,1,1
 MERR1,gene:plasmid:19403,0,0,1,1
@@ -1292,6 +1301,7 @@ MERR2,gene:plasmid:154422,0,1,0,1
 MERR2,gene:plasmid:154442,0,1,0,1
 MERR2,gene:plasmid:154443,0,1,0,1
 MERR2,gene:plasmid:154444,0,1,0,1
+MERR2,gene:plasmid:154450,0,1,0,1
 MERR2,gene:plasmid:154459,0,1,0,1
 MERR2,gene:plasmid:154460,0,1,0,1
 MERR2,gene:plasmid:88353,0,1,0,1
