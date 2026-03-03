@@ -28,7 +28,7 @@ center-text{
 /* Make top-left title match H1 */
 .nav-brand-title {
     font-family: inherit !important;
-    font-size: 2.25rem !important;   /* same as Bootstrap h1 (≈36px) */
+    font-size: 2.50rem !important;   /* same as Bootstrap h1 (≈36px) */
     font-weight: 800 !important;     /* bold like H1 */
     letter-spacing: -0.5px;          /* gives the clean H1 look */
     margin-left: 0.5rem;
@@ -54,7 +54,20 @@ h4, h5, h6 {
   display: block;
   flex-direction: column;
   height: auto;
+  min-height: 120vh;
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.08);
+  background: linear-gradient(
+    180deg,
+    #f8fafc 0%,
+    #eef2f7 100%
+  );
+  border-radius: 15px;        /* curved edges */
+  padding: 18px;
+  padding-bottom: 2rem;
 }
+
+
 
 /* header + menu keep natural height */
 header, #menu { flex: 0 0 auto; }
@@ -87,21 +100,7 @@ ul.clean-list li strong {
 }
 
 /* Page background */
-.page-bg {
-  min-height: 120vh;
-  background: linear-gradient(
-    180deg,
-    #f8fafc 0%,
-    #eef2f7 100%
-  );
 
-  border-radius: 15px;        /* curved edges */
-  padding: 18px;
-  padding-bottom: 2rem;
-
-  box-shadow:
-    0 20px 40px rgba(0,0,0,0.08);
-}
 
 /* Button base */
 .fab-btn {
@@ -218,14 +217,14 @@ ul.clean-list li strong {
 /* Legend pills */
 .chart-legend-box{
   position: absolute;
-  top: 220px;
-  right: 20px;
+  top: 1%;
+  right: 1%;
   background: rgba(255,255,255,0.96);
   border: 1px solid #dee2e6;
   border-radius: 10px;
   padding: 10px 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  font-size: 24px;
+  font-size: 12px;
 }
 .chart-legend-item{
   display: flex;
@@ -234,8 +233,8 @@ ul.clean-list li strong {
   margin-bottom: 4px;
 }
 .chart-legend-dot{
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
 }
 

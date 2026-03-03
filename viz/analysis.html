@@ -37,12 +37,12 @@
 </header>
 
 
-<div class="card shadow-sm border-0 mb-5 overflow-hidden">
+<div class="card mb-4 shadow-sm">
   <div class="p-3 border-bottom bg-white">
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
       <div>
         <div class="d-flex align-items-center gap-2">
-          <h5 id="chartTitle" class="mb-0 fw-semibold">ARG–MGE Colocalization Dynamics</h5>
+          <h2 id="chartTitle" class="mb-0 fw-semibold">ARG–MGE Colocalization Dynamics</h2>
           <span class="badge rounded-pill text-bg-light border" id="pageBadge">Page 1/1</span>
         </div>
         <div class="text-muted small mt-1">
@@ -65,7 +65,7 @@
         </div>
           <!-- <button id="downloadPdfBtn" class="btn btn-sm btn-secondary">Download PDF </button> -->
           <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2"id="downloadPdfBtn">
-          <svg class="rmobi-icon"><use href="#i-download"></use></svg>
+          <svg class="rmobi-icon" aria-hidden="true"><use href="/assets/icons/download.svg#i-download" xlink:href="/assets/icons/download.svg#i-download"></use></svg>
           PDF
           </button>
 
@@ -77,12 +77,17 @@
 
     <div class="card-body p-0 position-relative" id="chartExportArea">
       <div class="flex-grow-1">
-    <svg id="chartSvg" width="100%" height="1200"></svg>
+    <svg id="chartSvg" width="100%" height="740"></svg>
     </div>
     <div id="legendBox" class="chart-legend-box"></div>
     <div id="chartTip" class="chart-tip" style="opacity:0;"></div>
   </div>
 
+</div>
+<hr class="my-5" />
+        <p class="text-muted">
+©2026 Suhashi Nihara De Silva, Sakesh Andhavarapu, Alejandro Dale Kimball, Christina Boucher, Ilya B Slizovskiy. Released under the GNU General Public License v3.0 (GPLv3).
+</p>
 </div>
 
 
@@ -95,8 +100,8 @@
 
 
 <script>
-const width = 1200, height = 620;
-const margin = { top: 10, right: 40, bottom: 250, left: 80 };
+const width = 800, height = 300;
+const margin = { top: 10, right: 40, bottom: 100, left: 80 };
 const colorMap = {
   persisted:   "#3B75AF", // soft royal blue
   emerged:     "#E3B23C", // warm golden peach
@@ -106,7 +111,7 @@ const colorMap = {
 
 
 const keys = Object.keys(colorMap);
-const pageSize = 10;
+const pageSize = 25;
 
 const diseaseNames = {
   "MDRB": "Multi Drug Resistant Bacteria (MDRB)",
@@ -200,7 +205,7 @@ function drawPage() {
       .attr("y", 60)
       .attr("text-anchor", "middle")
       .style("fill", "#6c757d")
-      .style("font-size", "24px")
+      .style("font-size", "10px")
       .text("No data for this selection.");
     setButtonsDisabled();
     return;
@@ -242,7 +247,7 @@ function drawPage() {
 
   //
   yAxisG.selectAll(".tick text")
-    .style("font-size", "28px")
+    .style("font-size", "10px")
     .style("font-weight", 600);
 
 
@@ -256,11 +261,11 @@ function drawPage() {
   // Proper slanted labels
   xAxis.selectAll("text")
     .style("text-anchor", "end")
-    .attr("transform", "rotate(-89)")
+    .attr("transform", "rotate(-90)")
     .attr("dx", "-0.6em")
     .attr("dy", "0.25em")
-    .style("font-size", "32px")
-    .style("font-weight", 700)
+    .style("font-size", "8px")
+    .style("font-weight", 500)
     .style("fill", "#495057");
 
   // Axis label
@@ -269,9 +274,9 @@ function drawPage() {
     .attr("y", innerH / 2)
     .attr("transform", `rotate(-90, ${-48}, ${innerH / 2})`)
     .style("fill", "#495057")
-    .style("font-size", "32px")
-    .style("font-weight", 1000)
-    .text("Patients");
+    .style("font-size", "10px")
+    .style("font-weight",800)
+    .text("Patient Count");
 
   // Bars
   const t = d3.transition().duration(350);
@@ -334,8 +339,8 @@ function drawPage() {
       .attr("text-anchor", "middle")
       .attr("x", d => x(d.colocalization) + x.bandwidth() / 2)
       .attr("y", d => y(d.viewTotal) - 6)
-      .style("font-size", "24px")
-      .style("font-weight", 600)
+      .style("font-size", "10px")
+      .style("font-weight", 500)
       .style("fill", "#111827")
       .text(d => d3.format(",")(d.viewTotal));
 // --- SEGMENT labels inside stacks ---
@@ -353,8 +358,8 @@ segmentLabels.selectAll("text")
   .attr("text-anchor", "middle")
   .attr("x", d => x(d.data.colocalization) + x.bandwidth() / 2)
   .attr("y", d => (y(d[0]) + y(d[1])) / 2) // center of segment
-  .style("font-size", "18px")
-  .style("font-weight", 600)
+  .style("font-size", "10px")
+  .style("font-weight", 400)
   .style("fill", "#111827") 
   .style("pointer-events", "none")
   .text(d => {

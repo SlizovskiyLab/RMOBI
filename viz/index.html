@@ -42,9 +42,7 @@
   <!-- CARD 1 : Overview -->
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
-      <h3> A Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts</h3>
-      <h3 class="h4 fw-light text-muted">Suhashi Nihara De Silva, Sakesh Andhavarapu, Alejandro Dale Kimball,
-        Christina Boucher, Ilya B Slizovskiy</h3>
+      <h1  class="card-title"> A Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts</h1>
 
       <p>
         Antimicrobial resistance poses a major global health challenge, with horizontal gene transfer mediated by mobile genetic elements(MGE) driving the spread of resistance determinants. 
@@ -52,8 +50,8 @@
         dynamics before and after FMT has become integral, for understanding how resistance genes and their mobile carriers evolve and transfer within the host microbiome during treatment.
         This Temporal network framework is designed to track how ARGs and MGEs are colocalized across donor microbiota and recipient gut microbiome states before and after FMT. 
         The network model tracks ARG–MGE colocalizations and their temporal transitions, allowing users to examine how resistome–mobilome 
-        structures evolve across treatment phases. Through an interactive interface, users can filter the network by disease type, MGE group, and 
-        patient stage (donor, pre-FMT, post-FMT) to perform disease-specific or patient-level comparisons.
+        structures evolve across treatment phases. Through an interactive interface, users can filter the network by disease type, MGE group, 
+        patient stage (donor, pre-FMT, post-FMT) and by ARG or MGE to perform disease-specific comparisons.
       </p>
 
       <a type="button" class="btn btn-outline-primary" href="tool.html">View Visualization</a>
@@ -61,15 +59,25 @@
   </div>
 
   <!-- CARD 2 : Data & Input -->
+  <div class="row g-3">
+  <div class="col-md-6">
+  <div class="col-md-12">
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
-      <h2>Data & Input</h2>
+      <h2>Data</h2>
       <p>
-        Patient data was collected from multiple studies covering three different disease groups — Melanoma, MDRB, and rCDI. 
+        The study data set comprised 263 fecal metagenomes from sequenced human clinical microbiome samples collected in 13 published fecal microbiota transplantation (FMT) studies, representing 60 patients and 52 donors distributed in three disease specific in silico cohorts. The first cohort included individuals with primary enteric disease, most commonly recurrent Clostridioides difficile infection (rCDI; patients = 34). The second cohort consisted of patients with primary enteric disease associated with multi drug resistant bacterial (MDRB; patients = 14) and third cohort represented a non-enteric condition, melanoma (Melanoma; patients = 12), in which FMT was administered as adjuvant therapy to enhance the chemotherapeutic response. Together, these cohorts provide a diverse clinical context in which FMT has been applied, enabling comparative analysis of resistome-mobilome dynamics across distinct disease backgrounds
         These datasets provide paired donor, pre-FMT, and post-FMT samples, enabling tracking of AMR dynamics.
       </p>
-
-      <h4>CSV Structure</h4>
+  </div>
+    </div>
+  </div>
+  <div class="col-md-12">
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <h2>Input</h2>
+     <p> As the input data file we provide a CSV file, where each row represents a unique ARG–MGE colocalization event observed in a patient sample. The file must contain the following columns: </p>
+      <h4>Input File Structure</h4>
       <pre><code>
   Patient ID, Disease type, AMR ID, MGE ID, Donor, PreFMT, PostFMT(timepoints)
       </code></pre>
@@ -86,28 +94,31 @@
 
     </div>
   </div>
+  </div>
+  </div>
+  
 
   <!-- CARD 3 : Output -->
+  <div class="col-md-6">
   <div class="card mb-4 shadow-sm">
     <div class="card-body ">
-      <h2>Results & Output</h2>
+      <h2>Output</h2>
       
 
 RMOBI produces structured outputs that summarize how antimicrobial resistance genes (ARGs) and mobile genetic elements (MGEs) colocalize and change across donor, pre-FMT, and post-FMT samples. The results include:
 
-<h5> Disease-specific summaries</h5>
+<h6> Disease-specific summaries</h6>
 
 CSV files report each ARG–MGE colocalization and the number of patients in which it appears across the Melanoma, MDRB, and rCDI cohorts, along with phase-specific presence (Donor / Pre / Post).
 
-<h5> MGE-group summaries</h5>
-
+<h6> MGE-group summaries</h6>
 Colocalizations are organized by MGE family (e.g., plasmid, prophage, ICE), enabling identification of high-mobility MGEs and major ARG carriers.
 
-<h5> Temporal dynamics</h5>
+<h6> Temporal dynamics</h6>
 
 Each ARG–MGE pair is classified as Persist, Emerge, Disappear, or Transfer, indicating how interactions change across FMT treatment phases.
 
-<h5> Interactive network visualization</h5>
+<h6> Interactive network visualization</h6>
 
 All outputs can be visualized through an interactive D3.js network interface, allowing users to explore ARG–MGE relationships with filtering by disease group, MGE type, and timepoint.
 
@@ -135,17 +146,22 @@ All outputs can be visualized through an interactive D3.js network interface, al
       </code></pre>
     </div>
   </div>
+  </div>
+  </div>
 
 
   <!-- CARD 4 : Citation -->
-  <div class="card mb-4 shadow-sm">
+  <!-- <div class="card mb-4 shadow-sm">
     <div class="card-body prose">
         <h2>Citation</h2>
         <p>Include citation details here when ready.</p>
     </div>
-  </div>
+  </div> -->
 
-  <hr class="my-4" />
+   <hr class="my-5" />
+        <p class="text-muted">
+©2026 Suhashi Nihara De Silva, Sakesh Andhavarapu, Alejandro Dale Kimball, Christina Boucher, Ilya B Slizovskiy. Released under the GNU General Public License v3.0 (GPLv3).
+</p>
 
   <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
