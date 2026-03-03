@@ -83,7 +83,7 @@ cmake --build .
 
 Step 4: Run the executable
 ```
-./CoNet
+./rmobi
 ```
 
 ### Windows
@@ -99,13 +99,13 @@ mingw32-make
 
 Step 4: Run the executable
 ```
-./CoNet.exe
+./rmobi.exe
 ```
 
 ### Manually Run
-g++ -std=c++17 -Wall -Iinclude -Ithird_party src/*.cpp -o CoNet.exe
+g++ -std=c++17 -Wall -Iinclude -Ithird_party src/*.cpp -o rmobi.exe
 
-./CoNet.exe
+./rmobi.exe
 
 cd viz
 python3 -m http.server 8080

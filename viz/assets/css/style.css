@@ -39,19 +39,6 @@
   gap: 15px;
 }
 
-#legend {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-#legend .box {
-  width: 14px;
-  height: 14px;
-  display: inline-block;
-  border-radius: 3px;
-}
-
 #menu.collapsed #collapseArrow {
   transform: rotate(180deg);
 }
@@ -66,6 +53,17 @@
   border: 1px solid #ddd;
 }
 
+.graph-panel {
+  position: sticky;
+  flex: 1 1 auto;        
+  min-height: 0;  
+  top: 0;                /* or top: 12px to keep a gap under navbar */
+  height: 100vh !important;  
+  position: relative;     
+  overflow: hidden;       
+  margin-bottom: 0 !important;  
+}
+
 .full-width {
   width: 100%;
   max-width: none;
@@ -75,7 +73,7 @@
 
 section.full-width svg#graph {
   width: 100% !important;
-  height: 100vh !important;
+  height: 100% !important;
   display: block !important;
 }
 
@@ -107,8 +105,12 @@ table {
 
 #graph-container {
     width: 100%;
-    height: calc(100vh - 260px); /* navbar + controls */
-    min-height: 1100px; 
+    flex: 1 1 auto;
+    min-height: 0;       
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    overflow: visible !important;
     background: #f1f3f5;
     border: 1px solid #dee2e6;
     border-radius: 0.4rem;
@@ -124,426 +126,6 @@ table {
 #plots > div {
   flex: 1 1 45%;
 }
-.legend-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(255, 255, 255, 0.85);
-	backdrop-filter: blur(4px);
-	display: none;
-	align-items: center;
-	justify-content: center;
-	z-index: 10;
-	transition: opacity 0.3s ease;
-}
-
-.legend-overlay.visible {
-	display: flex;
-	opacity: 1;
-}
-
-.legend-content {
-	background: rgba(255, 255, 255, 0.95);
-	border: 1px solid #ccc;
-	border-radius: 8px;
-	padding: 20px 30px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-	max-width: 400px;
-	text-align: left;
-}
-
-.legend-content h6 {
-	margin-top: 0;
-	margin-bottom: 10px;
-	font-weight: 700;
-	text-align: center;
-}
-
-.legend-section {
-	margin-bottom: 10px;
-}
-
-.legend-section ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.legend-section li {
-	display: flex;
-	align-items: center;
-	margin-bottom: 6px;
-	font-size: 14px;
-}
-
-/* Node Symbols */
-.legend-symbol {
-	display: inline-block;
-	width: 16px;
-	height: 16px;
-	border: 1px solid #555;
-	border-radius: 3px;
-	margin-right: 8px;
-}
-
-.legend-symbol.arg {
-	background-color: #ff6666; 
-}
-
-.legend-symbol.mge {
-	background-color: #66ccff; 
-}
-
-/* Edge Lines */
-.legend-line {
-	display: inline-block;
-	width: 30px;
-	height: 2px;
-	margin-right: 8px;
-}
-
-.legend-line {
-  display: inline-block;
-  width: 36px;
-  height: 0;
-  position: relative;
-  vertical-align: middle;
-}
-
-.legend-line.colo {
-  border-bottom: 2px solid #999; /* keep colocalization solid */
-}
-
-.legend-line.temporal,
-.legend-line.temporal-donor-pre,
-.legend-line.temporal-donor-post,
-.legend-line.temporal-pre-post,
-.legend-line.temporal-post-post {
-  border-bottom: 2px dotted currentColor;
-}
-
-.legend-line.temporal::after,
-.legend-line.temporal-donor-pre::after,
-.legend-line.temporal-donor-post::after,
-.legend-line.temporal-pre-post::after,
-.legend-line.temporal-post-post::after {
-  content: "";
-  position: absolute;
-  right: -2px;
-  top: -4px;
-
-  width: 0;
-  height: 0;
-
-  border-left: 6px solid currentColor;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-}
-
-.legend-line.temporal {
-  color: #333;
-}
-
-.legend-line.temporal-donor-pre {
-  color: green;
-}
-
-.legend-line.temporal-donor-post {
-  color: #4B0082;
-}
-
-.legend-line.temporal-pre-post {
-  color: orange;
-}
-
-.legend-line.temporal-post-post {
-  color: black;
-}
-
-
-
-#timepointFilter {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-#timepointFilter[title]:hover {
-  cursor: help;
-}
-
-/* --- Legend Overlay Styling --- */
-.legend-overlay {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 320px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: -3px 0 10px rgba(0,0,0,0.2);
-  transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
-  z-index: 2000;
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.legend-overlay.visible {
-  transform: translateX(0);
-}
-
-.legend-content {
-  position: relative;
-  padding: 1rem;
-}
-
-/* Close button styling */
-.legend-close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: none;
-  border: none;
-}
-
-/* Legend symbols (nodes) */
-.legend-symbol {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  margin-right: 8px;
-  vertical-align: middle;
-  border: 1px solid #666;
-}
-
-/* Node type colors — match your actual graph colors */
-.legend-symbol.arg { background: grey; }     /* orange */
-.legend-symbol.mge { background: #1f77b4; }     /* blue */
-.legend-symbol.donor { background: yellow; }   /* brown */
-.legend-symbol.pre { background: red; }     /* purple */
-.legend-symbol.post1 { background: #99D2FF; }   /* green */
-.legend-symbol.post2 { background: #4D9DFF; }   /* teal */
-.legend-symbol.post3 { background: #3A6EFF; }   /* red */
-
-/* Edge styles */
-.legend-line {
-  display: inline-block;
-  width: 30px;
-  height: 2px;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
-.legend-line.colo {
-  background: #999;
-  border-bottom: 2px solid #999;
-}
-
-.legend-line.temporal {
-  background: repeating-linear-gradient(
-    to right,
-    #f4b400,
-    #f4b400 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-/* --- Legend Shapes (for MGE Groups) --- */
-.legend-shape {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  vertical-align: middle;
-  position: relative;
-}
-
-/* Diamond (Plasmid) */
-.legend-shape.plasmid {
-  background: grey; /* blue */
-  width: 14px;
-  height: 14px;
-  transform: rotate(45deg);
-  border: 1px solid #333;
-}
-
-.legend-shape.ice {
-  position: relative;
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background: grey;
-
-  clip-path: polygon(
-    50% 0%,
-    61% 35%,
-    98% 35%,
-    68% 57%,
-    79% 91%,
-    50% 70%,
-    21% 91%,
-    32% 57%,
-    2% 35%,
-    39% 35%
-  );
-  -webkit-clip-path: polygon(
-    50% 0%,
-    61% 35%,
-    98% 35%,
-    68% 57%,
-    79% 91%,
-    50% 70%,
-    21% 91%,
-    32% 57%,
-    2% 35%,
-    39% 35%
-  );
-}
-
-/* THICK OUTLINE */
-.legend-shape.ice::before {
-  content: "";
-  position: absolute;
-  inset: -1px;                 /* outline thickness */
-  background: grey;
-  z-index: -1;
-
-  clip-path: inherit;
-  -webkit-clip-path: inherit;
-}
-
-
-
-/* Cross (Prophage) */
-.legend-shape.prophage {
-  position: relative;
-  width: 14px;
-  height: 14px;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 6px;
-}
-
-/* vertical bar */
-.legend-shape.prophage::before,
-.legend-shape.prophage::after {
-  content: "";
-  position: absolute;
-  background-color: grey;
-  border: 1px solid #333;
-  border-radius: 2px;
-}
-
-/* vertical bar */
-.legend-shape.prophage::before {
-  width: 4px;
-  height: 14px;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-}
-
-/* horizontal bar */
-.legend-shape.prophage::after {
-  width: 14px;
-  height: 4px;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
-}
-
-
-/* Square (IS/TE) */
-.legend-shape.genomic-island {
-  background-color: grey;   
-  width: 14px;                 /* equal sides for a square */
-  height: 14px;
-  border: 1px solid #333;      /* dark border for contrast */
-  border-radius: 2px;          /* slight rounding for aesthetics */
-  display: inline-block;       /* ensures proper placement inside legend */
-  transform: none;             
-  vertical-align: middle;      
-  margin-right: 6px;           
-}
-
-
-/* Triangle (Virus) */
-.legend-shape.virus {
-  position: relative;
-  width: 0;
-  height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 16px solid grey; /* fill color */
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 6px;
-}
-
-/* Add a visible border around the triangle */
-.legend-shape.virus::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -10px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 18px solid #333; /* border color */
-  z-index: -1; /* place behind the main triangle */
-  transform: translateY(-2px);
-}
-
-.legend-shape.replicon {
-  position: relative;
-  display: inline-block;
-  width: 18px;
-  height: 12px;
-  vertical-align: middle;
-  margin-right: 6px;
-  transform: rotate(0deg);
-
-}
-
-.legend-shape.replicon::before {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 6px;
-  background: grey;
-  border-radius: 2px;
-
-  /* center bar */
-  left: 7px;
-  top: 0;
-
-  /* left & right bars */
-  box-shadow:
-    -5px 2px 0 grey,
-     5px 2px 0 grey;
-
-  transform-origin: center;
-}
-
-
-
-/* Octagon (Unknown) */
-.legend-shape.unknown {
-  width: 16px;
-  height: 16px;
-  background: #d62728; /* red */
-  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-  border: 1px solid #333;
-}
-
 
 .col-md-4, .col-lg-3, .col-lg-2 .col-lg-1{
   display: flex;
@@ -688,6 +270,134 @@ table {
   margin: 4px 0;
 }
 
+
+/* =========================
+   Legend Modal 
+   ========================= */
+
+.legend-modal{
+  border-radius: 14px;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+#legendModal .modal-dialog{
+  max-width: 560px;
+}
+
+#legendModal .modal-header{
+  padding: 0.8rem 1rem;
+}
+
+#legendModal .modal-title{
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+#legendModal .modal-body{
+  padding: 0.9rem 1rem 1rem;
+}
+
+/* Blocks + dividers */
+.legend-block{
+  padding: 0.25rem 0;
+}
+
+.legend-divider{
+  height: 1px;
+  background: rgba(0,0,0,0.12);
+  margin: 0.85rem 0;
+}
+
+.legend-title{
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin: 0 0 0.55rem 0;
+}
+
+/* Row layout: fixed swatch column + text */
+.legend-row{
+  display: grid;
+  grid-template-columns: 28px 1fr; /* icon column */
+  align-items: center;
+  column-gap: 14px;
+  padding: 4px 0;
+}
+
+.legend-text{
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.legend-muted{
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* Shape icons */
+.legend-icon{
+  width: 26px;
+  height: 26px;
+  color: #555;
+  display: inline-block;
+}
+
+.legend-icon svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Edge swatches (dotted + arrow) */
+.legend-swatch{
+  width: 40px;
+  height: 25px;
+  display: inline-block;
+  color: #333;        /* default */
+}
+
+.legend-swatch-svg{
+  width: 90%;
+  height: 100%;
+  display: block;
+}
+
+/* Make swatches use the same column as icons */
+.legend-row > .legend-swatch{
+  width: 40px;
+  justify-self: start;
+}
+
+/* Color mapping via currentColor */
+.legend-swatch.colo { color: #8a8a8a; }
+.legend-swatch.temporal { color: #333; }
+
+.legend-swatch.temporal-donor-pre  { color: #1b7f2a; }
+.legend-swatch.temporal-donor-post { color: #5a2ca0; }
+.legend-swatch.temporal-pre-post   { color: #f08a00; }
+.legend-swatch.temporal-post-post  { color: #111; }
+
+/* Mini-legend */
+
+/* Legend symbols (nodes) */
+.legend-symbol {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+  border: 1px solid #666;
+}
+
+/* Node type colors — match your actual graph colors */
+.legend-symbol.arg { background: grey; }     /* orange */
+.legend-symbol.mge { background: #1f77b4; }     /* blue */
+.legend-symbol.donor { background: yellow; }   /* brown */
+.legend-symbol.pre { background: red; }     /* purple */
+.legend-symbol.post1 { background: #99D2FF; }   /* green */
+.legend-symbol.post2 { background: #4D9DFF; }   /* teal */
+.legend-symbol.post3 { background: #3A6EFF; }   /* red */
 .mini-legend-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -707,69 +417,4 @@ table {
   gap: 10px;
   font-size: 0.92rem;
   white-space: nowrap;
-}
-
-.legend-modal {
-  top: 20%;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  border-radius: 16px;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-
-}
-
-#legendModal .modal-dialog {
-  max-width: 540px;   /* was too wide */
-}
-
-#legendModal .modal-content {
-  border-radius: 14px;
-}
-
-#legendModal .modal-header {
-  padding: 0.75rem 1rem;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-
-}
-
-#legendModal .modal-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-}
-
-#legendModal .legend-section > p {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-  margin-top: 0;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-
-}
-.legend-list {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-}
-
-.legend-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  font-size: 0.88rem;     /* ↓ key */
-  line-height: 1.35;
-  padding: 4px 0;  
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-       /* ↓ key */
-}
-
-#legendModal hr {
-  margin: 0.75rem 0;
-  opacity: 0.2;
-}
-
-#legendModal .modal-body {
-  padding: 0.75rem 1rem 1rem;
 }

@@ -17,7 +17,7 @@ function getTimepointCategory(timepoint) {
 
 function getTimepointColor(timepoint) {
   const t = Number(timepoint);
-  if (t === 1000) return "yellow";
+  if (t === 1000) return "#FCD12A";
   if (t === 0) return "red";
   if (t > 0 && t < 31) return "#99D2FF";
   if (t > 30 && t < 61) return "#4D9DFF";
@@ -109,11 +109,11 @@ function enrichLinks(links, nodeById /* optional */) {
     e.style = "dashed";
     e.penwidth = getPenWidth(e.weight);
 
-    // Prefer pre-attached timepoints (fast)
+    // pre-attached timepoints (fast)
     let srcTp = e.sourceTimepoint;
     let tgtTp = e.targetTimepoint;
 
-    // Fallback (only if not provided)
+    // Fallback
     if ((srcTp == null || tgtTp == null) && nodeById) {
       const sid = typeof e.source === "object" ? e.source.id : e.source;
       const tid = typeof e.target === "object" ? e.target.id : e.target;
@@ -142,20 +142,49 @@ const g = svg.select("g.main")
   : svg.select("g.main");
 const tooltip = d3.select("#tooltip");
 
+resizeGraphViewBox();
+window.addEventListener("resize", resizeGraphViewBox);
+
 const zoom = d3.zoom()
-  .scaleExtent([0.2, 8])
+  .scaleExtent([0.1, 5])
   .on("zoom", (e) => {
     g.attr("transform", e.transform);
   });
 
 svg.call(zoom);
+setInitialZoom(0.6); 
+
+function setInitialZoom(k = 0.25) {
+  const vb = svg.node().viewBox.baseVal; // 0 0 1000 1000
+  const cx = vb.x + vb.width / 2;
+  const cy = vb.y + vb.height / 2;
+
+  // zoom around the viewBox center
+  svg.call(
+    zoom.transform,
+    d3.zoomIdentity.translate(cx, cy).scale(k).translate(-cx, -cy)
+  );
+}
+
+function resizeGraphViewBox() {
+  const el = document.getElementById("graph");
+  if (!el) return;
+
+  const r = el.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width));
+  const h = Math.max(1, Math.round(r.height));
+
+  d3.select(el).attr("viewBox", `0 0 ${w} ${h}`);
+}
+
+
 
 // Optional: disable dblclick zoom
 // svg.on("dblclick.zoom", null);
 
 const zoomStep = 1.2;
 
-// Zoom around the SVG center (feels pro)
+// Zoom around the SVG center, for buttons
 function zoomAtCenter(k) {
   const node = svg.node();
   if (!node) return;
@@ -516,7 +545,8 @@ function updateVisualization(data) {
             .attr("markerUnits", "strokeWidth")
             .append("path")
             .attr("d", "M0,-5L10,0L0,5")
-            .attr("fill", c);
+            .attr("fill", c)
+            .attr("stroke", c);
     });
 
     const simNodes = data.nodes.map(d => ({ ...d }));
@@ -585,13 +615,13 @@ function updateVisualization(data) {
             .type(d => shapeMap[d.shape] || d3.symbolCircle)
             .size(d => {
                 if (!currentGraphKey.includes("graph2") || d.__disableScaling) {
-                    return 300;
+                    return 200;
                 }
                 const count = (typeof d.patientCount === "number") ? d.patientCount : 0;
 
                 // Smooth scaling between 150 and 4000 for counts 1–30
                 const MIN_COUNT = 1;
-                const MAX_COUNT = 30;
+                const MAX_COUNT = 60;
                 const MIN_SIZE = 150;
                 const MAX_SIZE = 4000;
 
@@ -604,7 +634,7 @@ function updateVisualization(data) {
             })
         )
         .attr("fill", d => d.color)
-        .attr("stroke", "grey")
+        .attr("stroke", d => d.color)
         .attr("stroke-width", 1.5)
         .call(d3.drag().on("start", dragstart).on("drag", dragged).on("end", dragend));
 
@@ -625,20 +655,27 @@ function updateVisualization(data) {
 
     g.selectAll("text.label").style("display", d3.select("#toggleLabels").property("checked") ? "block" : "none");
 
+    
+    function getCenter() {
+      const vb = svg.node().viewBox.baseVal;   // {x,y,width,height}
+      return [vb.x + vb.width / 2, vb.y + vb.height / 2];
+    }
+    const [cx, cy] = getCenter();
+
     // --- simulation ---
     const sim = d3.forceSimulation(simNodes)
-        .force("link", d3.forceLink(simLinks).id(d => d.id).distance(d => d.isColo ? 40 : 60))
-        .force("charge", d3.forceManyBody().strength(d => -(40 + (d.degree || 0) * 15)))
-        .force("center", d3.forceCenter(500, 350))
-        .force("collision", d3.forceCollide().radius(20))
-        .force("x", d3.forceX(500).strength(0.05))
-        .force("y", d3.forceY(350).strength(0.05))
-        .on("tick", ticked);
+      .force("link", d3.forceLink(simLinks).id(d => d.id).distance(d => d.isColo ? 40 : 60))
+      .force("charge", d3.forceManyBody().strength(d => -(40 + (d.degree || 0) * 15)))
+      .force("collision", d3.forceCollide().radius(20))
+      .force("center", d3.forceCenter(cx, cy))
+      .force("x", d3.forceX(cx).strength(0.05))
+      .force("y", d3.forceY(cy).strength(0.05))
+      .on("tick", ticked);
 
     function ticked() {
-        linkSelection.attr("d", d => linkArc(d));
-        nodeSelection.attr("transform", d => `translate(${d.x},${d.y})`);
-        labelSelection.attr("x", d => d.x).attr("y", d => d.y);
+      linkSelection.attr("d", d => linkArc(d));
+      nodeSelection.attr("transform", d => `translate(${d.x},${d.y})`);
+      labelSelection.attr("x", d => d.x).attr("y", d => d.y);
     }
 
     function dragstart(event, d) { if (!event.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
@@ -982,11 +1019,6 @@ function positionFab() {
   fab.style.display = visible ? "flex" : "none";
 }
 
-// Update on scroll + resize + initial load
-window.addEventListener("scroll", positionFab, { passive: true });
-window.addEventListener("resize", positionFab);
-positionFab();
-
 
 
 // --- EVENT LISTENERS ---
@@ -1004,6 +1036,11 @@ d3.select("#toggleTemporal").on("change", updateLinkVisibility);
 d3.selectAll(".timepoint-checkbox").on("change", applyFiltersAndDraw);
 document.getElementById("downloadSvgBtn").addEventListener("click", downloadCurrentGraphAsSVG);
 document.getElementById("downloadPdfBtn").addEventListener("click", downloadCurrentGraphAsPDF);
+
+// Update on scroll + resize + initial load
+window.addEventListener("scroll", positionFab, { passive: true });
+window.addEventListener("resize", positionFab);
+positionFab();
 
 const legendOverlay = document.getElementById("legendOverlay");
 // document.getElementById("toggleLegend").addEventListener("change", function() {

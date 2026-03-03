@@ -28,7 +28,6 @@
 
 <body>
 <div class="page-bg">
-<div class="container-fluid">
     <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
         <a href="index.html" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
             <img src="assets/img/Logo.svg" alt="AMR-GraphNet Logo" width="35" height="35" class="d-inline-block align-text-middle">
@@ -184,12 +183,12 @@
                              PDF
                         </button> -->
                         <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadSvgBtn">
-                        <svg class="rmobi-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+                        <svg class="rmobi-icon" aria-hidden="true"><use href="/assets/icons/download.svg#i-download" xlink:href="/assets/icons/download.svg#i-download"></use></svg>
                         SVG
                         </button>
 
                         <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadPdfBtn">
-                        <svg class="rmobi-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+                        <svg class="rmobi-icon" aria-hidden="true"><use href="/assets/icons/download.svg#i-download" xlink:href="/assets/icons/download.svg#i-download"></use></svg>
                         PDF
                         </button>
 
@@ -217,10 +216,21 @@
 
                 <!-- Column 2: Edge types -->
                 <div class="mini-legend-col">
-                    <div class="mini-item"><span class="legend-line colo"></span><span>Colocalization</span></div>
-                    <div class="mini-item"><span class="legend-line temporal"></span><span>Temporal</span></div>
+                    <div class="mini-item"><span class="legend-swatch colo">
+                    <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                        <line x1="6" y1="10" x2="114" y2="10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                    </span><span>Colocalization</span></div>
+                    <div class="mini-item"><span class="legend-swatch temporal">
+                    <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                        <line x1="6" y1="10" x2="92" y2="10"
+                              stroke="currentColor" stroke-width="4"
+                              stroke-linecap="round" stroke-dasharray="2 10"/>
+                        <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+                    </svg>
+                    </span><span>Temporal</span></div>
                     <button
-                    class="btn btn-outline-secondary btn-sm mt-2"
+                    class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2"
                     type="button"
                     data-bs-toggle="modal"
                     data-bs-target="#legendModal"
@@ -236,7 +246,7 @@
 
             </div>
         </div>
-    </div>
+  
 
     
     <div id="graph-container">
@@ -251,8 +261,8 @@
         <div class="stat" id="stat-coloc"><span class="k">Colocalization</span><span id="st-coloc" class="v">0</span></div>
         <div class="stat" id="stat-temp"><span class="k">Temporal</span><span id="st-temp" class="v">0</span></div>
         </div>
-        <div class="card mb-4 shadow-sm">
-            <svg id="graph" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="card shadow-sm graph-panel">
+            <svg id="graph" preserveAspectRatio="xMidYMid meet"></svg>
             <div class="zoom-fab-fixed" role="group" aria-label="Zoom controls">
                 <button id="zoom-in"  class="fab-btn" type="button" aria-label="Zoom in">
                 <!-- plus icon -->
@@ -270,6 +280,7 @@
             </div>
         </div>
     </div>
+  </div>
 <!-- Modal -->
 <div class="modal fade" id="legendModal" tabindex="-1" aria-labelledby="legendModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
@@ -279,54 +290,175 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body">
-        <!-- Node section -->
-        <div class="legend-section">
-          <p class="fw-semibold mb-2">Nodes</p>
-          <ul class="legend-list">
-            <li><span class="legend-symbol arg"></span> AMR (Antimicrobial Resistance Gene)</li>
-          </ul>
-        </div>
+      <div class="modal-body legend-body">
 
-        <hr class="my-3"/>
+        <!-- Nodes -->
+        <section class="legend-block">
+          <h6 class="legend-title">Nodes</h6>
 
-        <!-- MGE group section -->
-        <div class="legend-section">
-          <p class="fw-semibold mb-2">MGE Groups (Shapes)</p>
-          <ul class="legend-list">
-            <li><span class="legend-shape plasmid"></span> Plasmid</li>
-            <li><span class="legend-shape plasmid"></span> Inc_plasmid</li>
-            <li><span class="legend-shape plasmid"></span> Colicin_plasmid</li>
-            <li><span class="legend-shape prophage"></span> Prophage</li>
-            <li><span class="legend-shape ice"></span> ICE</li>
-            <li><span class="legend-shape replicon"></span> Replicon</li>
-            <li><span class="legend-shape genomic-island"></span> Likely IS/TE</li>
-            <li><span class="legend-shape virus"></span> Virus</li>
-          </ul>
-        </div>
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+            </span>
+            <div class="legend-text">
+              AMR <span class="legend-muted">(Antimicrobial Resistance Gene)</span>
+            </div>
+          </div>
+        </section>
 
-        <hr class="my-3"/>
+        <div class="legend-divider"></div>
 
-        <!-- Edge section -->
-        <div class="legend-section">
-          <p class="fw-semibold mb-2">Edges</p>
-          <ul class="legend-list">
-            <li><span class="legend-line colo"></span> Colocalization Link (ARG–MGE)</li>
-            <li><span class="legend-line temporal"></span> Temporal Link (same ARG/MGE across timepoints)</li>
-          </ul>
-        </div>
+        <!-- MGE Groups -->
+        <section class="legend-block">
+          <h6 class="legend-title">MGE Groups (Shapes)</h6>
 
-        <hr class="my-3"/>
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" fill="currentColor" transform="rotate(45 12 12)"/>
+              </svg>
+            </span>
+            <div class="legend-text">Plasmid / Inc Plasmid / Colicin Plasmid</div>
+          </div>
 
-        <div class="legend-section">
-          <p class="fw-semibold mb-2">Temporal Edges</p>
-          <ul class="legend-list">
-            <li><span class="legend-line temporal-donor-pre"></span> Donor → PreFMT</li>
-            <li><span class="legend-line temporal-donor-post"></span> Donor → PostFMT</li>
-            <li><span class="legend-line temporal-pre-post"></span> PreFMT → PostFMT</li>
-            <li><span class="legend-line temporal-post-post"></span> PostFMT → PostFMT</li>
-          </ul>
-        </div>
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/>
+              </svg>
+            </span>
+            <div class="legend-text">Prophage</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 3l2.7 5.7 6.3.9-4.6 4.5 1.1 6.3L12 17.9 6.5 20.4 7.6 14 3 9.6l6.3-.9L12 3z"/>
+              </svg>
+            </span>
+            <div class="legend-text">ICE</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <g fill="currentColor">
+                  <rect x="9.5" y="3" width="5" height="9" rx="1"/>
+                  <rect x="9.5" y="3" width="5" height="9" rx="1" transform="rotate(120 12 12)"/>
+                  <rect x="9.5" y="3" width="5" height="9" rx="1" transform="rotate(240 12 12)"/>
+                </g>
+                <circle cx="12" cy="12" r="2.2" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">Replicon</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">Likely IS/TE</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 5 L20 19 H4 Z" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">Virus</div>
+          </div>
+        </section>
+
+        <div class="legend-divider"></div>
+
+        <!-- Edges -->
+        <section class="legend-block">
+          <h6 class="legend-title">Edges</h6>
+
+          <div class="legend-row">
+            <span class="legend-swatch colo" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="114" y2="10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div class="legend-text">
+              Colocalization Link <span class="legend-muted">(ARG–MGE)</span>
+            </div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-swatch temporal" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="92" y2="10"
+                      stroke="currentColor" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="2 10"/>
+                <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">
+              Temporal Link <span class="legend-muted">(same ARG/MGE across timepoints)</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="legend-divider"></div>
+
+        <!-- Temporal Edges -->
+        <section class="legend-block">
+          <h6 class="legend-title">Temporal Edges</h6>
+
+          <div class="legend-row">
+            <span class="legend-swatch temporal-donor-pre" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="92" y2="10"
+                      stroke="currentColor" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="2 10"/>
+                <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">Donor → PreFMT</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-swatch temporal-donor-post" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="92" y2="10"
+                      stroke="currentColor" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="2 10"/>
+                <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">Donor → PostFMT</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-swatch temporal-pre-post" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="92" y2="10"
+                      stroke="currentColor" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="2 10"/>
+                <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">PreFMT → PostFMT</div>
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-swatch temporal-post-post" aria-hidden="true">
+              <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
+                <line x1="6" y1="10" x2="92" y2="10"
+                      stroke="currentColor" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="2 10"/>
+                <polygon points="92,3 114,10 92,17" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="legend-text">PostFMT → PostFMT</div>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
