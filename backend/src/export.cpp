@@ -8,9 +8,9 @@
 #include <map>
 #include <utility>
 #include <algorithm>
-#include "graph.h"
-#include "id_maps.h"
-#include "export.h"
+#include "../include/graph.h"
+#include "../include/id_maps.h"
+#include "../include/export.h"
 
 std::string getNodeName(const Node& node) {
     std::string name = "N_" + std::to_string(node.id);

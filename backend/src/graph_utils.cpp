@@ -1,8 +1,8 @@
 // Released under the GNU GPLv3; see LICENSE for details.
 // Developed by Boucher Lab and Slizovskiy Lab.
 
-#include "graph_utils.h"
-#include "id_maps.h"
+#include "../include/graph_utils.h"
+#include "../include/id_maps.h"
 #include <iostream>
 #include <unordered_set>
 

@@ -1,0 +1,27 @@
+{
+  "input": {
+    "input_data": "data/patientwise_colocalization_by_timepoint.csv"
+  },
+  "output": {
+    "base": "docs/output",
+    "disease_type": "docs/output/disease_type",
+    "temporal_dynamics": {
+      "emerge": "docs/output/temporal_dynamics/emerge.csv",
+      "disappear": "docs/output/temporal_dynamics/disappear.csv",
+      "transfer": "docs/output/temporal_dynamics/transfer.csv",
+      "persist": "docs/output/temporal_dynamics/persist.csv"
+    },
+    "mge_group": "docs/output/mge_group",
+    "top_entities": {
+      "top_arg": "docs/output/top_entities/top_arg.csv",
+      "top_mge": "docs/output/top_entities/top_mge.csv",
+      "top_colocalizations": "docs/output/top_entities/top_colocalizations.csv"
+    }
+
+  },
+  "docs": {
+    "interaction_json": "docs/json/graph1.json",
+    "parent_json": "docs/json/graph2.json",
+    "temporal_dynamics_disease": "docs/json/temporal_dynamics_disease.json"
+  }
+}

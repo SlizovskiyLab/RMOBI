@@ -46,7 +46,7 @@ See the [`LICENSE`](LICENSE) file for the full license text.
 
 
 
-## Run the C++ Framework   
+## To Run the C++ Framework Locally  
 
 ### Prerequisites
 
@@ -67,7 +67,7 @@ cd RMOBI
 ## Build the C++ project
 
 Step 1: Create and enter build directory
-mkdir -p build
+
 cd build
 
 ### Linux/macOS
@@ -81,9 +81,9 @@ Step 3: Compile the project
 cmake --build .
 ```
 
-Step 4: Run the executable
+Step 4: Go back to project folder. Run the executable
 ```
-./rmobi
+./backend/build/rmobi
 ```
 
 ### Windows
@@ -97,20 +97,21 @@ Step 3: Compile the project
 mingw32-make
 ```
 
-Step 4: Run the executable
+Step 4: Go back to project folder. Run the executable
 ```
-./rmobi.exe
+./build/rmobi.exe
 ```
 
 ### Manually Run
-g++ -std=c++17 -Wall -Iinclude -Ithird_party src/*.cpp -o rmobi.exe
+g++ -std=c++17 -Wall -Iinclude -Ithird_party backend/src/*.cpp -o rmobi.exe
 
 ./rmobi.exe
 
-cd viz
-python3 -m http.server 8080
+### Run Visualization Tool Locally
+Step 1: cd docs
 
-Check 
+Step 2: python3 -m http.server 8080
+ 
 http://localhost:8080/index.html
 
 

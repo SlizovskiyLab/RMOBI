@@ -1,7 +1,9 @@
 # Ignore build directory
-build/
+backend/build/
 archive/
 graphs/
+.vscode/
 
 # Ignore .exe files
 *.exe
+rmobi

@@ -8,12 +8,12 @@
 #include <unordered_set>
 #include <tuple>
 #include <set>
-#include "graph.h"
-#include "Timepoint.h"
-#include "analysis.h"
-#include "id_maps.h"
-#include "config_loader.h"
-#include "traversal.h"
+#include "../include/graph.h"
+#include "../include/Timepoint.h"
+#include "../include/analysis.h"
+#include "../include/id_maps.h"
+#include "../include/config_loader.h"
+#include "../include/traversal.h"
 #include <filesystem>
 #include <algorithm>
 #include <fstream>
@@ -31,7 +31,7 @@ fs::path top_entities_arg;
 fs::path disease_type_path;
 fs::path mge_group_path;
 
-Config cfg = loadConfig("config/paths.json");
+Config cfg = loadConfig("backend/config/paths.json");
 
 
 bool isPostFMT(const Timepoint& tp) {
@@ -330,7 +330,7 @@ void writeTemporalDynamicsCountsForDisease(
         });
     }
 
-    writeCSV("viz/output/disease_type/" + disease + ".csv",
+    writeCSV("docs/output/disease_type/" + disease + ".csv",
         {"ARG_ID","MGE_ID","Donor","Pre","Post","PatientCount"},
         rows);
 }

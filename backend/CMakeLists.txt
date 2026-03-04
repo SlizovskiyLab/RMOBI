@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(CoNet CXX)
+project(rmobi CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/external)
 
 # Single executable (no other main files!)
-add_executable(CoNet
+add_executable(rmobi
     src/main.cpp
     src/graph.cpp
     src/export_graph_json.cpp
@@ -16,16 +16,16 @@ add_executable(CoNet
     src/parser.cpp
     src/id_maps.cpp
     src/traversal.cpp
-    src/query_engine.cpp
+    src/config_loader.cpp
     src/export.cpp
     src/graph_utils.cpp
-    src/graph_analysis.cpp
+    src/analysis.cpp
 )
 
 # Optional warnings
 if (MSVC)
-  target_compile_options(CoNet PRIVATE /W4)
+  target_compile_options(rmobi PRIVATE /W4)
 else()
-  target_compile_options(CoNet PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(rmobi PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 

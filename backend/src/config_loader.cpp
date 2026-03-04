@@ -33,9 +33,9 @@ Config loadConfig(const std::string& filename) {
     cfg.output_top_mge              = te.at("top_mge").get<std::string>();
     cfg.output_top_colocalizations  = te.at("top_colocalizations").get<std::string>();
 
-    cfg.viz_interaction        = j.at("viz").at("interaction_json").get<std::string>();
-    cfg.viz_parent             = j.at("viz").at("parent_json").get<std::string>();
-    cfg.viz_temporal_dynamics  = j.at("viz").at("temporal_dynamics_disease").get<std::string>();
+    cfg.viz_interaction        = j.at("docs").at("interaction_json").get<std::string>();
+    cfg.viz_parent             = j.at("docs").at("parent_json").get<std::string>();
+    cfg.viz_temporal_dynamics  = j.at("docs").at("temporal_dynamics_disease").get<std::string>();
 
     return cfg;
 }

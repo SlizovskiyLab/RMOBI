@@ -31,7 +31,7 @@ fs::path mge_group_output;
 
 int main() {
     try {
-        Config cfg = loadConfig("config/paths.json");
+        Config cfg = loadConfig("backend/config/paths.json");
         data_file = fs::path(cfg.input_data_path);
         interaction_json_path = fs::path(cfg.viz_interaction);
         parent_json_path = fs::path(cfg.viz_parent);
@@ -55,7 +55,7 @@ int main() {
     buildAdjacency(g, adjacency);
 
     /******************************** Graph Statistics  ************************************/
-    writeGraphStatisticsCSV(g, adjacency, "viz/output/graph_statistics.csv");
+    writeGraphStatisticsCSV(g, adjacency, "docs/output/graph_statistics.csv");
 
     /******************************** Traversal of Graph  ************************************/
     std::map<std::pair<int, int>, std::multiset<Timepoint>> colocalizationTimeline;
