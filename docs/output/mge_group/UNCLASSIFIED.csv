@@ -1,5 +1,0 @@
-ARG_ID,MGE_ID,Donor,Pre,Post,PatientCount
-ERMB,gene:plasmid:28967,0,1,0,1
-ERMB,gene:plasmid:28967,1,0,0,1
-ERMC,gene:plasmid:19874,0,1,0,1
-MERR2,gene:plasmid:154450,0,1,0,1

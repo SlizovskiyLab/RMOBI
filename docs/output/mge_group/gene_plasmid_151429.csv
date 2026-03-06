@@ -1,4 +1,0 @@
-ARG_ID,MGE_ID,Donor,Pre,Post,PatientCount
-ANT3-DPRIME,gene:plasmid:151429,0,0,1,1
-ANT3-DPRIME,gene:plasmid:151429,0,1,0,1
-MERR1,gene:plasmid:151429,0,0,1,1
