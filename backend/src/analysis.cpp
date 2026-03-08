@@ -1,5 +1,6 @@
 // Released under the GNU GPLv3; see LICENSE for details.
 // Developed by Boucher Lab and Slizovskiy Lab.
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
 #include <iostream>
 #include <string>

@@ -34,7 +34,6 @@
           <li><a href="./index.html" class="nav-link px-2 link-dark nav-about">About</a></li>
           <li><a href="./tool.html" class="nav-link px-2 link-dark nav-tool">Tool</a></li>
           <li><a href="./analysis.html" class="nav-link px-2 link-dark nav-analysis">Analysis</a></li>
-          <li><a href="./downloads.html" class="nav-link px-2 link-dark nav-downloads">Downloads</a></li>
           <li><a href="./contact.html" class="nav-link px-2 link-dark nav-contact">Contact</a></li>
       </ul>
   </header>
@@ -45,13 +44,9 @@
       <h1  class="card-title"> A Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts</h1>
 
       <p>
-        Antimicrobial resistance poses a major global health challenge, with horizontal gene transfer mediated by mobile genetic elements(MGE) driving the spread of resistance determinants. 
-        With the growing clinical adoption of Fecal Microbiota Transplantation (FMT) for treating multiple diseases, characterizing Antibiotic Resistance Genes (ARG) and MGE colocalization 
-        dynamics before and after FMT has become integral, for understanding how resistance genes and their mobile carriers evolve and transfer within the host microbiome during treatment.
-        This Temporal network framework is designed to track how ARGs and MGEs are colocalized across donor microbiota and recipient gut microbiome states before and after FMT. 
-        The network model tracks ARG–MGE colocalizations and their temporal transitions, allowing users to examine how resistome–mobilome 
-        structures evolve across treatment phases. Through an interactive interface, users can filter the network by disease type, MGE group, 
-        patient stage (donor, pre-FMT, post-FMT) and by ARG or MGE to perform disease-specific comparisons.
+        RMOBI is a temporal network framework designed for tracking colocalization patterns between antimicrobial resistance genes (ARGs) and mobile genetic elements (MGEs) across donor and recipient gut microbiomes before and after Fecal Microbiota Transplantation (FMT). The framework integrates all publicly available FMT associated longitudinal shotgun metagenomic datasets from the NCBI Sequence Read Archive (SRA) to model ARG–MGE colocalizations and their temporal transitions, enabling users to examine how resistome–mobilome dynamics evolve across treatment phases.
+        Through an interactive interface, users can filter the network by disease type, MGE group, 
+        patient stage (donor, pre-FMT, post-FMT) and by ARG or MGE to perform disease specific comparisons.
       </p>
 
       <a type="button" class="btn btn-outline-primary" href="tool.html">View Visualization</a>
@@ -95,6 +90,16 @@
     </div>
   </div>
   </div>
+  <div class="col-md-12">
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h2>Downloads</h2>
+          <p>We have released the source code of the tool and data under the GNU GPLv3 license. Everything listed on this website can be found in our github repository (<a
+            href="https://github.com/SlizovskiyLab/RMOBI/">https://github.com/SlizovskiyLab/RMOBI</a>). </p>
+
+            </div>
+    </div>
+  </div>
   </div>
   
 
@@ -107,11 +112,11 @@
 
 RMOBI produces structured outputs that summarize how antimicrobial resistance genes (ARGs) and mobile genetic elements (MGEs) colocalize and change across donor, pre-FMT, and post-FMT samples. The results include:
 
-<h6> Disease-specific summaries</h6>
+<h6> Disease specific summaries</h6>
 
 CSV files report each ARG–MGE colocalization and the number of patients in which it appears across the Melanoma, MDRB, and rCDI cohorts, along with phase-specific presence (Donor / Pre / Post).
 
-<h6> MGE-group summaries</h6>
+<h6> MGE group summaries</h6>
 Colocalizations are organized by MGE family (e.g., plasmid, prophage, ICE), enabling identification of high-mobility MGEs and major ARG carriers.
 
 <h6> Temporal dynamics</h6>

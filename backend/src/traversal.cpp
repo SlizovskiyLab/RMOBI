@@ -2,6 +2,7 @@
 // Developed by Boucher Lab and Slizovskiy Lab.
 
 /* Traverse the graph based on earliest colocalizations */
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "../include/traversal.h"
 #include "../include/graph.h"
 #include "../include/Timepoint.h"

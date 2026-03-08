@@ -60,7 +60,7 @@
   top: 0;                /* or top: 12px to keep a gap under navbar */
   height: 100vh !important;  
   position: relative;     
-  overflow: hidden;       
+  /* overflow: hidden;        */
   margin-bottom: 0 !important;  
 }
 
@@ -103,7 +103,7 @@ table {
     font-weight: 500;
 }
 
-#graph-container {
+/* #graph-container {
     width: 100%;
     flex: 1 1 auto;
     min-height: 0;       
@@ -116,7 +116,7 @@ table {
     border-radius: 0.4rem;
     position: relative;
     overflow: hidden; 
-}
+} */
 
 #plots {
   display: flex;
@@ -277,7 +277,7 @@ table {
 
 .legend-modal{
   border-radius: 14px;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui;
 }
 
 #legendModal .modal-dialog{
@@ -315,17 +315,26 @@ table {
   margin: 0 0 0.55rem 0;
 }
 
+.legend-description{
+  font-size: 0.90rem;
+  color: #555;
+  margin: 0 0 0.85rem 0;
+  font-family: "Inter", system-ui;
+
+}
+
 /* Row layout: fixed swatch column + text */
 .legend-row{
   display: grid;
   grid-template-columns: 28px 1fr; /* icon column */
   align-items: center;
   column-gap: 14px;
-  padding: 4px 0;
+  padding: 2px 0;
+  margin-left: 5%;
 }
 
 .legend-text{
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   line-height: 1.25;
 }
 

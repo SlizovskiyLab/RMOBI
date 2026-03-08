@@ -17,7 +17,7 @@ function getTimepointCategory(timepoint) {
 
 function getTimepointColor(timepoint) {
   const t = Number(timepoint);
-  if (t === 1000) return "#FCD12A";
+  if (t === 1000) return "yellow";
   if (t === 0) return "red";
   if (t > 0 && t < 31) return "#99D2FF";
   if (t > 30 && t < 61) return "#4D9DFF";
@@ -546,7 +546,8 @@ function updateVisualization(data) {
             .append("path")
             .attr("d", "M0,-5L10,0L0,5")
             .attr("fill", c)
-            .attr("stroke", c);
+            .attr("stroke", c)
+            .attr("stroke-width", 0.5);
     });
 
     const simNodes = data.nodes.map(d => ({ ...d }));
@@ -584,6 +585,7 @@ function updateVisualization(data) {
 
         .on("mouseover", function(event, d) {
             if (!currentGraphKey.includes("graph1")) return;  // Only graph1.json
+            if (!d.isColo) return;  // Only colocalization links
 
             const count = d.individualCount ?? d.patientCount ?? 0;
 
@@ -634,8 +636,8 @@ function updateVisualization(data) {
             })
         )
         .attr("fill", d => d.color)
-        .attr("stroke", d => d.color)
-        .attr("stroke-width", 1.5)
+        .attr("stroke", d => "#999")
+        .attr("stroke-width", 0.5)
         .call(d3.drag().on("start", dragstart).on("drag", dragged).on("end", dragend));
 
     nodeSelection.append("title").text(d => {

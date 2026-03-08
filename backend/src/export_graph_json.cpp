@@ -42,16 +42,16 @@ namespace fs = std::filesystem;
 // }
 
 
-auto timepointOrder = [](Timepoint tp) -> int {
-    if (tp == Timepoint::Donor) return -1;
-    if (tp == Timepoint::PreFMT) return 0;
-    return static_cast<int>(tp);
-};
+// auto timepointOrder = [](Timepoint tp) -> int {
+//     if (tp == Timepoint::Donor) return -1;
+//     if (tp == Timepoint::PreFMT) return 0;
+//     return static_cast<int>(tp);
+// };
 
 //ordering/adjacency decisions (Donor < PreFMT < PostFMT)
-static inline int tpSort(Timepoint tp) {
-    return timepointOrder(tp);
-}
+// static inline int tpSort(Timepoint tp) {
+//     return timepointOrder(tp);
+// }
 
 static inline int tpJson(Timepoint tp) {
     const int v = static_cast<int>(tp);

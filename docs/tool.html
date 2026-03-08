@@ -37,7 +37,6 @@
             <li><a href="./index.html" class="nav-link px-2 link-dark nav-about">About</a></li>
             <li><a href="./tool.html" class="nav-link px-2 link-dark nav-tool">Tool</a></li>
             <li><a href="./analysis.html" class="nav-link px-2 link-dark nav-analysis">Analysis</a></li>
-            <li><a href="./downloads.html" class="nav-link px-2 link-dark nav-downloads">Downloads</a></li>
             <li><a href="./contact.html" class="nav-link px-2 link-dark nav-contact">Contact</a></li>
         </ul>
     </header>
@@ -50,6 +49,7 @@
             <div class="col-lg-6">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-3">
+                       <div class="fw-semibold">Graph Filters</div>
                         <!-- Graph View -->
                         <div class="col-md-4">
                         <label class="form-label"><strong>Graph View</strong></label>
@@ -154,6 +154,8 @@
             <div class="col-lg-2">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-2">
+                        <div class="fw-semibold">View Options</div>
+                        <div class="col-md-12">
                     <!-- Column 1 -->
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleLabels" checked>
@@ -191,7 +193,7 @@
                         <svg class="rmobi-icon" aria-hidden="true"><use href="assets/icons/download.svg#i-download" xlink:href="assets/icons/download.svg#i-download"></use></svg>
                         PDF
                         </button>
-
+                    </div>
                     </div>
                     </div>
                 </div>
@@ -201,17 +203,18 @@
             <div class="card p-3 h-100 shadow-sm">
 
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="fw-semibold">Legend</div>
+                <div class="fw-semibold">Graph Legend</div>
                 </div>
+                <div class="mini-legend-description">Node colors represent patient stages. Solid edges indicate colocalization relationships, while arrowed edges represent temporal transitions between stages</div>
 
                 <div class="mini-legend-grid">
                 <!-- Column 1: Sample colors -->
                 <div class="mini-legend-col">
                     <div class="mini-item"><span class="legend-symbol donor"></span><span>Donor</span></div>
                     <div class="mini-item"><span class="legend-symbol pre"></span><span>Pre-FMT</span></div>
-                    <div class="mini-item"><span class="legend-symbol post1"></span><span>Post 1–30d</span></div>
-                    <div class="mini-item"><span class="legend-symbol post2"></span><span>Post 31–60d</span></div>
-                    <div class="mini-item"><span class="legend-symbol post3"></span><span>Post 61+d</span></div>
+                    <div class="mini-item"><span class="legend-symbol post1"></span><span>Post-FMT 1–30d</span></div>
+                    <div class="mini-item"><span class="legend-symbol post2"></span><span>Post-FMT 31–60d</span></div>
+                    <div class="mini-item"><span class="legend-symbol post3"></span><span>Post-FMT 61+d</span></div>
                 </div>
 
                 <!-- Column 2: Edge types -->
@@ -300,7 +303,8 @@
         <!-- Nodes -->
         <section class="legend-block">
           <h6 class="legend-title">Nodes</h6>
-
+          <p class="legend-description">In colocalozation centric view, nodes are displayed in corresponding MGE group shape and node sizes are proportional to the patient count.
+          </p>
           <div class="legend-row">
             <span class="legend-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
@@ -382,7 +386,8 @@
         <!-- Edges -->
         <section class="legend-block">
           <h6 class="legend-title">Edges</h6>
-
+          <p class="legend-description"> In ARG-MGE interaction view, colocalization edge thickness is proportional to the patient count.
+          </p>
           <div class="legend-row">
             <span class="legend-swatch colo" aria-hidden="true">
               <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">

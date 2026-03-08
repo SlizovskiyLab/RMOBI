@@ -57,7 +57,7 @@ int main() {
     /******************************** Graph Statistics  ************************************/
     writeGraphStatisticsCSV(g, adjacency, "docs/output/graph_statistics.csv");
 
-    /******************************** Traversal of Graph  ************************************/
+    /******************************** Traversal of Graph  ***********************************/
     std::map<std::pair<int, int>, std::multiset<Timepoint>> colocalizationTimeline;
     traverseAdjacency(g, adjacency, colocalizationTimeline);
 
@@ -67,7 +67,7 @@ int main() {
     std::map<std::pair<int, int>, std::set<int>> globalPairToPatients;
     
 
-    /********************************* Colocalizations by Timepoints ************************************/
+    /********************************* Colocalizations by Timepoints *************************/
     writeAllDiseasesTemporalDynamicsCounts(colocalizationByIndividual, patientToDiseaseMap);
     writeTemporalDynamicsCountsForMGEGroup(colocalizationByIndividual);
     mostProminentEntities(g);
@@ -76,7 +76,7 @@ int main() {
 
     exportColocalizations(g, colocalizationByIndividual);
 
-    // /************************************* Graph Visualization ***********************************/
+    // /********************************* Graph Visualization *********************************/
 
     Graph rmobi = g;
     exportGraphToJsonSimple(rmobi, interaction_json_path.string(), patientToDiseaseMap);
