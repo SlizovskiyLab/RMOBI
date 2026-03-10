@@ -7,8 +7,9 @@ output_file_name = '../scripts/mge_name.txt'
 '''
 for plasmids/prophages (where final_classification= plasmid), using 'socus to name the gene
 for both plasmids / prophages, if the final_classificaiton= likelyIS/TE, then the gene named based on sig_seq column
-For ICEBerg or anything in the final_classification= ICE, using the genebank_id
+For ICEBerg or anything in the final_classification= ICE, use the third value from first column, between 2nd & 3rd pipe
 For virus, classify  by gene:vir 
+Inc_plasmid, colicin plasmid and replicon - name in first column
 '''
 
 
@@ -22,17 +23,15 @@ try:
             final_class_col_index = header.index('final_classification')
             sig_seq_col_index = header.index('sig_seq')
             socus_col_index = header.index('socus')
-            genebank_id_index = header.index('genebank_id')
         except ValueError as e:
             print(f"Error: A required column is missing from the CSV header: {e}")
             exit()
 
         for row in reader:
-            if len(row) > max(id_col_index, final_class_col_index, sig_seq_col_index, genebank_id_index, socus_col_index):
+            if len(row) > max(id_col_index, final_class_col_index, sig_seq_col_index, socus_col_index):
                 key = row[id_col_index]
                 final_classification = row[final_class_col_index]
                 sig_seq = row[sig_seq_col_index]
-                genebank_id = row[genebank_id_index]
                 socus = row[socus_col_index]
 
                 value_to_store = None
@@ -40,7 +39,10 @@ try:
                 if final_classification == "likely IS/TE":
                     value_to_store = sig_seq
                 elif final_classification == "ICE":
-                    value_to_store = genebank_id
+                    # split by | and take the 3rd value
+                    value_to_store = key.split("|")[2]
+                elif final_classification == 'Colicin_plasmid' or 'Inc_plasmid' or 'replicon':
+                    value_to_store = key
                 elif socus and socus.strip():
                     value_to_store = socus
 
