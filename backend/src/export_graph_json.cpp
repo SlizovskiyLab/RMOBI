@@ -89,18 +89,22 @@ bool exportGraphToJsonSimple(const Graph& g,
             processedColoEdges.insert(canon);
         }
 
-        // Diseases list (unique)
         json diseases = json::array();
+        json diseaseCounts = json::object();
+
         if (edge.isColo) {
-            std::set<std::string> diseaseSet;
+            std::map<std::string, int> diseaseCounter;
+
             for (int patientID : edge.individuals) {
                 auto it = patientToDiseaseMap.find(patientID);
                 if (it != patientToDiseaseMap.end()) {
-                    diseaseSet.insert(it->second);
+                    diseaseCounter[it->second]++;
                 }
             }
-            for (const auto& diseaseName : diseaseSet) {
+
+            for (const auto& [diseaseName, count] : diseaseCounter) {
                 diseases.push_back(diseaseName);
+                diseaseCounts[diseaseName] = count;
             }
         }
 
@@ -112,6 +116,7 @@ bool exportGraphToJsonSimple(const Graph& g,
             {"individualCount", static_cast<int>(edge.individuals.size())},
             {"isColo", edge.isColo},
             {"diseases", diseases},
+            {"diseaseCounts", diseaseCounts},
 
             // timepoints for fast temporal styling in JS
             {"sourceTimepoint", static_cast<int>(edge.source.timepoint)},

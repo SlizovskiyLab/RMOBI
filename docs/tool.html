@@ -37,7 +37,7 @@
             <li><a href="./index.html" class="nav-link px-2 link-dark nav-about">About</a></li>
             <li><a href="./tool.html" class="nav-link px-2 link-dark nav-tool">Tool</a></li>
             <li><a href="./analysis.html" class="nav-link px-2 link-dark nav-analysis">Analysis</a></li>
-            <li><a href="./contact.html" class="nav-link px-2 link-dark nav-contact">Contact</a></li>
+            <li><a href="./contact.html" class="nav-link px-2 link-dark nav-contact">Help</a></li>
         </ul>
     </header>
 
@@ -131,16 +131,19 @@
                             <input type="hidden" id="timepointFilterHidden" value="all">
                         </div>
 
-                        <!-- Search -->
-                        <div class="col-md-3">
-                            <label class="form-label"><strong>Search ARGs</strong></label>
-                            <input type="text" id="argSearch" class="form-control">
-                        </div>
+                        <!-- Search ARG -->
+                      <div class="col-md-3">
+                        <label class="form-label"><strong>Search ARGs</strong></label>
+                        <input type="text" id="argSearch" class="form-control" list="argSuggestions">
+                        <datalist id="argSuggestions" class="suggestions-box"></datalist>
+                      </div>
 
-                        <div class="col-md-3">
-                            <label class="form-label"><strong>Search MGEs</strong></label>
-                            <input type="text" id="mgeSearch" class="form-control">
-                        </div>
+                      <!-- Search MGE -->
+                      <div class="col-md-3">
+                        <label class="form-label"><strong>Search MGEs</strong></label>
+                        <input type="text" id="mgeSearch" class="form-control" list="mgeSuggestions">
+                        <datalist id="mgeSuggestions" class="suggestions-box"></datalist>
+                      </div>
 
                         <!-- Reset Button -->
                         <div class="col-md-2 d-flex align-items-end">
@@ -154,14 +157,13 @@
             <div class="col-lg-2">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-2">
-                        <div class="fw-semibold">View Options</div>
+                        <label class="form-label"><strong>View Options</strong></label>
                         <div class="col-md-12">
                     <!-- Column 1 -->
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleLabels" checked>
                             <label class="form-check-label" for="toggleLabels">Node Labels</label>
                         </div>
-
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleTemporal" checked>
                             <label class="form-check-label" for="toggleTemporal">Temporal Links</label>
@@ -170,32 +172,42 @@
                             <input class="form-check-input" type="checkbox" id="toggleColo" checked>
                             <label class="form-check-label" for="toggleColo">Colocalization Links</label>
                         </div>
-
+                        </div>
+                        </div>
                         <!-- <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleLegend">
                         </div> -->
                         <!-- Download Button -->
-                        <div class="d-flex gap-2 mt-3">
-                        <!-- <button class="btn btn-outline-dark" id="downloadSvgBtn">
-                               <span class="icon-download-black"></span>
-                               SVG
-                        </button>
-                        <button type="button" class="btn btn-outline-dark" id="downloadPdfBtn">
-                             <span class="icon-download-black"></span>
-                             PDF
-                        </button> -->
-                        <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadSvgBtn">
-                        <svg class="rmobi-icon" aria-hidden="true"><use href="assets/icons/download.svg#i-download" xlink:href="assets/icons/download.svg#i-download"></use></svg>
-                        SVG
-                        </button>
+                        <div class="divider my-3">
+                        <label class="form-label"><strong>Download Options</strong></label>
+                        <div class="dropdown w-100">
+                          <button class="btn dropdown-btn w-100 text-start" type="button" data-bs-toggle="dropdown">
+                            Download
+                          </button>
 
-                        <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadPdfBtn">
-                        <svg class="rmobi-icon" aria-hidden="true"><use href="assets/icons/download.svg#i-download" xlink:href="assets/icons/download.svg#i-download"></use></svg>
-                        PDF
-                        </button>
-                    </div>
-                    </div>
-                    </div>
+                          <ul class="dropdown-menu">
+                            <li>
+                              <a class="dropdown-item" href="#" id="downloadSvgBtn">
+                                <svg class="rmobi-icon"><use href="assets/icons/download.svg#i-download"></use></svg>
+                                SVG
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item" href="#" id="downloadPdfBtn">
+                                <svg class="rmobi-icon"><use href="assets/icons/download.svg#i-download"></use></svg>
+                                PDF
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item" href="#" id="downloadDataBtn">
+                                <svg class="rmobi-icon"><use href="assets/icons/download.svg#i-download"></use></svg>
+                                Data
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                        </div>
+                    
                 </div>
                 </div>
             
@@ -203,7 +215,7 @@
             <div class="card p-3 h-100 shadow-sm">
 
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="fw-semibold">Graph Legend</div>
+                <label class="form-label"><strong>Graph Legend</strong></label>
                 </div>
                 <div class="mini-legend-description">Node colors represent patient stages. Solid edges indicate colocalization relationships, while arrowed edges represent temporal transitions between stages</div>
 
@@ -284,10 +296,10 @@
         </div>
     </div>
   
-    <hr class="my-5" />
+    <!-- <hr class="my-5" />
         <p class="text-muted">
 ©2026 Suhashi Nihara De Silva, Sakesh Andhavarapu, Alejandro Dale Kimball, Christina Boucher, Ilya B Slizovskiy. Released under the GNU General Public License v3.0 (GPLv3).
-</p>
+</p> -->
   </div>
 <!-- Modal -->
 <div class="modal fade" id="legendModal" tabindex="-1" aria-labelledby="legendModalLabel" aria-hidden="true">

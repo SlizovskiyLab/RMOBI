@@ -141,6 +141,7 @@ const g = svg.select("g.main")
   ? svg.append("g").attr("class", "main")
   : svg.select("g.main");
 const tooltip = d3.select("#tooltip");
+let currentRenderedData = { nodes: [], links: [] };
 
 resizeGraphViewBox();
 window.addEventListener("resize", resizeGraphViewBox);
@@ -319,7 +320,7 @@ function applyFiltersAndDraw() {
     if (!originalData[currentGraphKey]) return;
 
     let data = JSON.parse(JSON.stringify(originalData[currentGraphKey]));
-    
+
     enrichNodes(data.nodes);
     const nodeById = new Map(data.nodes.map(n => [n.id, n]));
     enrichLinks(data.links, nodeById);
@@ -327,47 +328,77 @@ function applyFiltersAndDraw() {
     const filters = {
         disease: d3.select("#diseaseFilter").property("value"),
         mgeGroup: d3.select("#mgeGroupFilter").property("value"),
-        timepoints: Array.from(
-            d3.selectAll(".timepoint-checkbox").nodes()
-        )
-        .filter(cb => cb.checked)
-        .map(cb => cb.value),
+        timepoints: Array.from(d3.selectAll(".timepoint-checkbox").nodes())
+            .filter(cb => cb.checked)
+            .map(cb => cb.value),
         argSearchTerm: d3.select("#argSearch").property("value").trim().toLowerCase(),
         mgeSearchTerm: d3.select("#mgeSearch").property("value").trim().toLowerCase(),
     };
 
     let { nodes, links } = data;
-    
-    // --- FILTERING PIPELINE ---
 
-    let strictlyFilteredNodeIds = getStrictlyFilteredNodeIds(nodes, links, filters);
+    // -------------------------------------------------
+    // STEP 1: Build working link set for graph1 disease
+    // -------------------------------------------------
+    let workingLinks = links.map(l => ({ ...l }));
 
-    let seedNodeIds = getSeedNodeIds(nodes, filters, strictlyFilteredNodeIds);
-
-    let finalVisibleNodeIds;
-    // Add patientCount to colocalization links (graph1 only)
     if (currentGraphKey.includes("graph1")) {
-        const activeDisease = d3.select("#diseaseFilter").property("value");
+        workingLinks = workingLinks
+            .filter(l => {
+                if (!l.isColo) return true; // keep temporal links
+                if (filters.disease === "all") return true;
 
-        data.links.forEach(link => {
-            if (!link.isColo) return;
+                const dc = l.diseaseCounts || {};
+                return (Number(dc[filters.disease]) || 0) > 0;
+            })
+            .map(l => {
+                if (!l.isColo) return l;
 
-            const dc = link.diseaseCounts || {};
+                const dc = l.diseaseCounts || {};
+                l.patientCount =
+                    filters.disease === "all"
+                        ? Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0)
+                        : Number(dc[filters.disease]) || 0;
 
-            if (activeDisease !== "all") {
-                link.patientCount = Number(dc[activeDisease]) || 0;
-            } else {
-                link.patientCount = Object.values(dc)
-                    .reduce((sum, v) => sum + (Number(v) || 0), 0);
-            }
+                return l;
+            });
+    }
+
+    // -------------------------------------------------
+    // STEP 2: For graph2, assign node patientCount 
+    // -------------------------------------------------
+    let workingNodes = nodes.map(n => ({ ...n }));
+
+    if (!currentGraphKey.includes("graph1")) {
+        workingNodes = workingNodes.map(n => {
+            const dc = n.diseaseCounts || {};
+            n.patientCount =
+                filters.disease === "all"
+                    ? Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0)
+                    : Number(dc[filters.disease]) || 0;
+            return n;
         });
     }
 
-    if (filters.mgeGroup !== 'all' || filters.argSearchTerm || filters.mgeSearchTerm) {
+    // -------------------------------------------------
+    // STEP 3: Strict filtering should use workingLinks
+    // -------------------------------------------------
+    let strictlyFilteredNodeIds = getStrictlyFilteredNodeIds(
+        workingNodes,
+        workingLinks,
+        filters
+    );
+
+    let seedNodeIds = getSeedNodeIds(workingNodes, filters, strictlyFilteredNodeIds);
+
+    let finalVisibleNodeIds;
+
+    if (filters.mgeGroup !== "all" || filters.argSearchTerm || filters.mgeSearchTerm) {
         if (seedNodeIds.size === 0) {
             finalVisibleNodeIds = new Set();
         } else {
-            const neighborIds = getNeighborIds(links, seedNodeIds);
+            // IMPORTANT: use workingLinks, not original links
+            const neighborIds = getNeighborIds(workingLinks, seedNodeIds);
             const allowedNeighbors = [...neighborIds].filter(id => strictlyFilteredNodeIds.has(id));
             const allowedSeeds = [...seedNodeIds].filter(id => strictlyFilteredNodeIds.has(id));
             finalVisibleNodeIds = new Set([...allowedSeeds, ...allowedNeighbors]);
@@ -376,17 +407,38 @@ function applyFiltersAndDraw() {
         finalVisibleNodeIds = strictlyFilteredNodeIds;
     }
 
-    const finalNodes = nodes.filter(n => finalVisibleNodeIds.has(n.id));
-    let finalLinks = links.filter(l => {
-        const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
-        const targetId = typeof l.target === 'object' ? l.target.id : l.target;
+    // -------------------------------------------------
+    // STEP 4: Build final nodes/links from working sets
+    // -------------------------------------------------
+    let finalNodes = workingNodes.filter(n => finalVisibleNodeIds.has(n.id));
+
+    let finalLinks = workingLinks.filter(l => {
+        const sourceId = typeof l.source === "object" ? l.source.id : l.source;
+        const targetId = typeof l.target === "object" ? l.target.id : l.target;
         return finalVisibleNodeIds.has(sourceId) && finalVisibleNodeIds.has(targetId);
     });
-        
-    updateVisualization({ nodes: finalNodes, links: finalLinks });
+
+    // remove isolated nodes after link pruning
+    if (currentGraphKey.includes("graph1")) {
+        const linkedNodeIds = new Set();
+        finalLinks.forEach(l => {
+            const sourceId = typeof l.source === "object" ? l.source.id : l.source;
+            const targetId = typeof l.target === "object" ? l.target.id : l.target;
+            linkedNodeIds.add(sourceId);
+            linkedNodeIds.add(targetId);
+        });
+        finalNodes = finalNodes.filter(n => linkedNodeIds.has(n.id));
+    }
+
+    populateSearchSuggestionsFromNodes(finalNodes);
+
+    currentRenderedData = { nodes: finalNodes, links: finalLinks };
+
+    updateVisualization(currentRenderedData);
     const stats = computeGraphStats(finalNodes, finalLinks);
     renderGraphStats(stats);
 }
+
 // -- Disable filters for Colocalization View ---
 function disableFiltersForColoView() {
     d3.select("#argSearch").property("value", "").attr("disabled", true);
@@ -416,27 +468,33 @@ function getStrictlyFilteredNodeIds(nodes, links, filters) {
     } else {
         visibleNodeIds.clear();
     }
-    
+
     // Disease Filter
-    if (filters.disease !== 'all') {
+    if (filters.disease !== "all") {
         let diseaseFilteredIds = new Set();
-        if (currentGraphKey.includes('graph1')) {
+
+        if (currentGraphKey.includes("graph1")) {
             links.forEach(link => {
-                if (link.isColo && link.diseases && link.diseases.includes(filters.disease)) {
-                    diseaseFilteredIds.add(typeof link.source === 'object' ? link.source.id : link.source);
-                    diseaseFilteredIds.add(typeof link.target === 'object' ? link.target.id : link.target);
+                if (!link.isColo) return;
+
+                const dc = link.diseaseCounts || {};
+                if ((Number(dc[filters.disease]) || 0) > 0) {
+                    diseaseFilteredIds.add(typeof link.source === "object" ? link.source.id : link.source);
+                    diseaseFilteredIds.add(typeof link.target === "object" ? link.target.id : link.target);
                 }
             });
         } else {
             nodes.forEach(node => {
-                if (node.diseases && node.diseases.includes(filters.disease)) {
+                const dc = node.diseaseCounts || {};
+                if ((Number(dc[filters.disease]) || 0) > 0) {
                     diseaseFilteredIds.add(node.id);
                 }
             });
         }
+
         visibleNodeIds = new Set([...visibleNodeIds].filter(id => diseaseFilteredIds.has(id)));
     }
-    
+
     return visibleNodeIds;
 }
 
@@ -552,6 +610,47 @@ function updateVisualization(data) {
 
     const simNodes = data.nodes.map(d => ({ ...d }));
     const simLinks = data.links.map(d => ({ ...d }));
+
+    const neighborMap = new Map(simNodes.map(n => [n.id, new Set()]));
+
+    simLinks.forEach(l => {
+      const s = typeof l.source === "object" ? l.source.id : l.source;
+      const t = typeof l.target === "object" ? l.target.id : l.target;
+      neighborMap.get(s)?.add(t);
+      neighborMap.get(t)?.add(s);
+    });
+
+    function getDraggedGroup(node) {
+      const ids = new Set([node.id, ...(neighborMap.get(node.id) || [])]);
+      return simNodes.filter(n => ids.has(n.id));
+    }
+
+    function dragstart(event, d) {
+      d._dragGroup = getDraggedGroup(d);
+      d._lastX = event.x;
+      d._lastY = event.y;
+    }
+
+    function dragged(event, d) {
+      if (!d._dragGroup) return;
+
+      const dx = event.x - d._lastX;
+      const dy = event.y - d._lastY;
+
+      d._dragGroup.forEach(n => {
+        n.x += dx;
+        n.y += dy;
+      });
+
+      d._lastX = event.x;
+      d._lastY = event.y;
+
+      ticked();
+    }
+
+    function dragend(event, d) {
+      d._dragGroup = null;
+    }
 
     // --- compute patient count only if graph2.json - colocalization view ---
     if (currentGraphKey.includes("graph2")) {
@@ -672,17 +771,18 @@ function updateVisualization(data) {
       .force("center", d3.forceCenter(cx, cy))
       .force("x", d3.forceX(cx).strength(0.05))
       .force("y", d3.forceY(cy).strength(0.05))
-      .on("tick", ticked);
+      .alpha(1)
+      .alphaDecay(0.03)
+      .on("tick", ticked)
+      .on("end", () => {
+        console.log("simulation finished");
+      });;
 
     function ticked() {
       linkSelection.attr("d", d => linkArc(d));
       nodeSelection.attr("transform", d => `translate(${d.x},${d.y})`);
       labelSelection.attr("x", d => d.x).attr("y", d => d.y);
     }
-
-    function dragstart(event, d) { if (!event.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
-    function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
-    function dragend(event, d) { if (!event.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }
 
     updateLinkVisibility();
 }
@@ -789,6 +889,73 @@ function updateTimepointButtonText() {
   };
   button.textContent = checked.map(cb => pretty[cb.value]).join(", ");
 }
+
+// ----ARG, MGE Search suggestions population based on current visible nodes after filtering---
+function populateSearchSuggestionsFromNodes(nodes) {
+  const argList = document.getElementById("argSuggestions");
+  const mgeList = document.getElementById("mgeSuggestions");
+  const argInput = document.getElementById("argSearch");
+  const mgeInput = document.getElementById("mgeSearch");
+
+  if (!argList || !mgeList || !argInput || !mgeInput) return;
+
+  argList.innerHTML = "";
+  mgeList.innerHTML = "";
+
+  const argQuery = argInput.value.trim().toLowerCase();
+  const mgeQuery = mgeInput.value.trim().toLowerCase();
+
+  function rankAndLimit(labels, query) {
+    const uniqueLabels = [...new Set(labels.map(s => s.trim()).filter(Boolean))];
+
+    if (!query) {
+      return uniqueLabels
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, 5);
+    }
+
+    const prefixMatches = [];
+    const containsMatches = [];
+
+    uniqueLabels.forEach(label => {
+      const lower = label.toLowerCase();
+
+      if (lower.startsWith(query)) {
+        prefixMatches.push(label);
+      } else if (lower.includes(query)) {
+        containsMatches.push(label);
+      }
+    });
+
+    prefixMatches.sort((a, b) => a.localeCompare(b));
+    containsMatches.sort((a, b) => a.localeCompare(b));
+
+    return [...prefixMatches, ...containsMatches].slice(0, 5);
+  }
+
+  const argLabels = rankAndLimit(
+    nodes.filter(n => n.isARG && n.label).map(n => n.label),
+    argQuery
+  );
+
+  const mgeLabels = rankAndLimit(
+    nodes.filter(n => !n.isARG && n.label).map(n => n.label),
+    mgeQuery
+  );
+
+  argLabels.forEach(label => {
+    const option = document.createElement("option");
+    option.value = label;
+    argList.appendChild(option);
+  });
+
+  mgeLabels.forEach(label => {
+    const option = document.createElement("option");
+    option.value = label;
+    mgeList.appendChild(option);
+  });
+}
+
 
 // --- SVG DOWNLOAD ---
 function downloadCurrentGraphAsSVG() {
@@ -909,6 +1076,185 @@ async function downloadCurrentGraphAsPDF() {
       : "graph") + ".pdf";
 
   pdf.save(fileName);
+}
+
+// --- Text DOWNLOAD ---
+function downloadCurrentGraphAsText() {
+  console.log("CSV clicked");
+
+  if (!currentRenderedData || !currentRenderedData.nodes.length) {
+    console.warn("No rendered data available for export");
+    return;
+  }
+
+  const activeDisease = d3.select("#diseaseFilter").property("value");
+
+  const nodes = currentRenderedData.nodes;
+  const links = currentRenderedData.links || [];
+
+  const rows = [];
+  rows.push([
+    "ARG_Label",
+    "MGE_Label",
+    "MGE_Group",
+    "Disease",
+    "Donor",
+    "Pre",
+    "Post",
+    "PatientCount"
+  ]);
+
+  // -----------------------------
+  // graph2: nodes already represent ARG-MGE colocalizations
+  // -----------------------------
+  if (currentGraphKey.includes("graph2.json")) {
+    for (const node of nodes) {
+      const tp = Number(node.timepoint);
+      const category = getTimepointCategory(tp);
+
+      const diseaseCounts = node.diseaseCounts || {};
+
+      let diseases = [];
+      let patientCount = 0;
+
+      if (activeDisease !== "all") {
+        patientCount = Number(diseaseCounts[activeDisease]) || 0;
+        if (patientCount <= 0) continue; // only export selected disease
+        diseases = [activeDisease];
+      } else {
+        diseases = Object.keys(diseaseCounts).filter(
+          d => Number(diseaseCounts[d]) > 0
+        );
+        patientCount = Object.values(diseaseCounts).reduce(
+          (sum, v) => sum + (Number(v) || 0),
+          0
+        );
+      }
+
+      const donor = category === "donor" ? patientCount : 0;
+      const pre = category === "pre" ? patientCount : 0;
+      const post =
+        category === "post1" || category === "post2" || category === "post3"
+          ? patientCount
+          : 0;
+
+      let argLabel = "";
+      let mgeLabel = node.label || "";
+
+      if (typeof node.label === "string" && node.label.includes("+")) {
+        const parts = node.label.split("+");
+        argLabel = parts[0]?.trim() || "";
+        mgeLabel = parts.slice(1).join("+").trim() || "";
+      }
+
+      rows.push([
+        argLabel,
+        mgeLabel,
+        node.mgeGroup || "",
+        diseases.join(";"),
+        donor,
+        pre,
+        post,
+        patientCount
+      ]);
+    }
+  }
+
+  // -----------------------------
+  // graph1: export visible colocalization links
+  // -----------------------------
+  else {
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const coloLinks = links.filter(l => l.isColo);
+
+    for (const link of coloLinks) {
+      const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+      const targetId = typeof link.target === "object" ? link.target.id : link.target;
+
+      const sourceNode = nodeById.get(sourceId);
+      const targetNode = nodeById.get(targetId);
+      if (!sourceNode || !targetNode) continue;
+
+      let argNode, mgeNode;
+
+      if (sourceNode.isARG && !targetNode.isARG) {
+        argNode = sourceNode;
+        mgeNode = targetNode;
+      } else if (!sourceNode.isARG && targetNode.isARG) {
+        argNode = targetNode;
+        mgeNode = sourceNode;
+      } else {
+        continue;
+      }
+
+      const dc = link.diseaseCounts || {};
+
+      let disease = "";
+      let patientCount = 0;
+
+      if (activeDisease !== "all") {
+        patientCount = Number(dc[activeDisease]) || 0;
+        if (patientCount <= 0) continue; // only export selected disease
+        disease = activeDisease;
+      } else {
+        disease = link.diseases ? link.diseases.join(";") : "";
+        patientCount = Object.values(dc).reduce(
+          (sum, v) => sum + (Number(v) || 0),
+          0
+        );
+
+        // fallback if diseaseCounts missing
+        if (patientCount === 0) {
+          patientCount = Number(link.patientCount ?? link.individualCount ?? 0);
+        }
+      }
+
+      const tp = Number(link.sourceTimepoint ?? link.targetTimepoint);
+      const category = getTimepointCategory(tp);
+
+      const donor = category === "donor" ? patientCount : 0;
+      const pre = category === "pre" ? patientCount : 0;
+      const post =
+        category === "post1" || category === "post2" || category === "post3"
+          ? patientCount
+          : 0;
+
+      rows.push([
+        argNode.label || "",
+        mgeNode.label || "",
+        mgeNode.mgeGroup || "",
+        disease,
+        donor,
+        pre,
+        post,
+        patientCount
+      ]);
+    }
+  }
+
+  const csvContent = rows
+    .map(row =>
+      row
+        .map(value => {
+          const s = String(value ?? "");
+          return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        })
+        .join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const fileName = currentGraphKey.replace(/^.*[\\/]/, "").replace(".json", "") + ".csv";
+  a.href = url;
+  a.download = fileName;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // --- GRAPH STATISTICS ---
@@ -1038,6 +1384,9 @@ d3.select("#toggleTemporal").on("change", updateLinkVisibility);
 d3.selectAll(".timepoint-checkbox").on("change", applyFiltersAndDraw);
 document.getElementById("downloadSvgBtn").addEventListener("click", downloadCurrentGraphAsSVG);
 document.getElementById("downloadPdfBtn").addEventListener("click", downloadCurrentGraphAsPDF);
+document.getElementById("downloadDataBtn").addEventListener("click", downloadCurrentGraphAsText);
+document.getElementById("argSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
+document.getElementById("mgeSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 
 // Update on scroll + resize + initial load
 window.addEventListener("scroll", positionFab, { passive: true });
