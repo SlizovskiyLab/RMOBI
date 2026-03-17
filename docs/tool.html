@@ -52,7 +52,12 @@
                        <div class="fw-semibold">Graph Filters</div>
                         <!-- Graph View -->
                         <div class="col-md-4">
-                        <label class="form-label"><strong>Graph View</strong></label>
+                        <label class="form-label"><strong>Graph View</strong>
+                          <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Graph View"
+                          data-bs-content="Choose the graph representation to display. ARG-MGE Interaction View shows interactions between ARGs and MGEs, while Colocalization View focuses on colocalization relationships.">
+                          ?
+                        </button>
+                        </label>
                         <div class="dropdown w-100" data-target-input="#dataset">
                             <button class="btn dropdown-btn w-100 text-start" type="button" data-bs-toggle="dropdown">
                                 ARG-MGE Interaction View
@@ -68,7 +73,12 @@
 
                         <!-- Disease -->
                         <div class="col-md-4">
-                            <label class="form-label"><strong>Disease</strong></label>
+                            <label class="form-label"><strong>Disease</strong>
+                              <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Disease"
+                               data-bs-content="Filter the graph by disease cohort. Select a disease to show only nodes and edges associated with that cohort.">
+                               ?
+                              </button> 
+                            </label>
                             <div class="dropdown w-100" data-target-input="#diseaseFilter">
                                 <button
                                 class="btn dropdown-btn w-100 text-start"
@@ -90,7 +100,11 @@
 
                         <!-- MGE Group -->
                         <div class="col-md-4">
-                            <label class="form-label"><strong>MGE Group</strong></label>
+                            <label class="form-label"><strong>MGE Group</strong>
+                              <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Mobile Genetic Element Group" data-bs-content="Filter MGEs by final classification group. This helps narrow the graph to specific classes of mobile genetic elements.">
+                              ?
+                              </button>
+                            </label>
                             <div class="dropdown w-100" data-target-input="#mgeGroupFilter">
                                 <button
                                 class="btn dropdown-btn w-100 text-start"
@@ -108,7 +122,11 @@
 
                         <!-- Patient Stages -->
                         <div class="col-md-4">
-                            <label class="form-label"><strong>Patient Stages</strong></label>
+                            <label class="form-label"><strong>Patient Stages</strong>
+                              <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Patient Stages" data-bs-content="Select one or more patient time stages to display. These stages represent correspoding donor, pre-FMT, and post-FMT sampling windows.">
+                              ?
+                              </button>
+                            </label>
                             <div class="dropdown w-100 ">
                             <button class="btn dropdown-btn w-100 text-start"
                                     id="timepointFilter"
@@ -133,14 +151,24 @@
 
                         <!-- Search ARG -->
                       <div class="col-md-3">
-                        <label class="form-label"><strong>Search ARGs</strong></label>
+                        <label class="form-label"><strong>Search ARGs</strong>
+                          <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Antimicrobial Resistance Genes"
+                          data-bs-content="Type to search for a specific antimicrobial resistance gene by gene identifier as given in MEGARes 3.0. Matching nodes related to the entered ARG will be highlighted or filtered accordingly.">
+                          ?
+                          </button>
+                        </label>
                         <input type="text" id="argSearch" class="form-control" list="argSuggestions">
                         <datalist id="argSuggestions" class="suggestions-box"></datalist>
                       </div>
 
                       <!-- Search MGE -->
                       <div class="col-md-3">
-                        <label class="form-label"><strong>Search MGEs</strong></label>
+                        <label class="form-label"><strong>Search MGEs</strong>
+                          <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Mobile Genetic Elements"
+                          data-bs-content="Type to search for a specific mobile genetic element by element identifier. Matching nodes related to the entered MGE will be highlighted or filtered accordingly.">
+                          ?
+                          </button>
+                        </label>
                         <input type="text" id="mgeSearch" class="form-control" list="mgeSuggestions">
                         <datalist id="mgeSuggestions" class="suggestions-box"></datalist>
                       </div>
@@ -157,7 +185,12 @@
             <div class="col-lg-2">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-2">
-                        <label class="form-label"><strong>View Options</strong></label>
+                        <label class="form-label"><strong>View Options</strong>
+                          <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="View Options"
+                          data-bs-content="Toggle the visibility of different graph elements. You can choose to show or hide node labels, temporal edges, and colocalization edges to customize the graph display according to your preferences.">
+                          ?
+                          </button>
+                        </label>
                         <div class="col-md-12">
                     <!-- Column 1 -->
                         <div class="form-check">
@@ -166,11 +199,11 @@
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleTemporal" checked>
-                            <label class="form-check-label" for="toggleTemporal">Temporal Links</label>
+                            <label class="form-check-label" for="toggleTemporal">Temporal Edges</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="toggleColo" checked>
-                            <label class="form-check-label" for="toggleColo">Colocalization Links</label>
+                            <label class="form-check-label" for="toggleColo">Colocalization Edges</label>
                         </div>
                         </div>
                         </div>
@@ -179,7 +212,12 @@
                         </div> -->
                         <!-- Download Button -->
                         <div class="divider my-3">
-                        <label class="form-label"><strong>Download Options</strong></label>
+                        <label class="form-label"><strong>Download Options</strong>
+                          <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Download Options"
+                          data-bs-content="Export the current graph visualization in various formats. You can download the graph as an SVG, a PDF, or as raw data for further analysis. Wait until the graph is fully loaded and stable before exporting.">
+                          ?
+                          </button>
+                        </label>
                         <div class="dropdown w-100">
                           <button class="btn dropdown-btn w-100 text-start" type="button" data-bs-toggle="dropdown">
                             Download
@@ -235,7 +273,7 @@
                     <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
                         <line x1="6" y1="10" x2="114" y2="10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
                     </svg>
-                    </span><span>Colocalization</span></div>
+                    </span><span>Colocalization Edge</span></div>
                     <div class="mini-item"><span class="legend-swatch temporal">
                     <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
                         <line x1="6" y1="10" x2="92" y2="10"
@@ -243,7 +281,7 @@
                               stroke-linecap="round" stroke-dasharray="2 10"/>
                         <polygon points="92,3 114,10 92,17" fill="currentColor"/>
                     </svg>
-                    </span><span>Temporal</span></div>
+                    </span><span>Temporal Edge</span></div>
                     <button
                     class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2"
                     type="button"
@@ -315,8 +353,6 @@
         <!-- Nodes -->
         <section class="legend-block">
           <h6 class="legend-title">Nodes</h6>
-          <p class="legend-description">In colocalozation centric view, nodes are displayed in corresponding MGE group shape and node sizes are proportional to the patient count.
-          </p>
           <div class="legend-row">
             <span class="legend-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
@@ -398,8 +434,6 @@
         <!-- Edges -->
         <section class="legend-block">
           <h6 class="legend-title">Edges</h6>
-          <p class="legend-description"> In ARG-MGE interaction view, colocalization edge thickness is proportional to the patient count.
-          </p>
           <div class="legend-row">
             <span class="legend-swatch colo" aria-hidden="true">
               <svg viewBox="0 0 120 20" class="legend-swatch-svg" preserveAspectRatio="none">
@@ -407,7 +441,7 @@
               </svg>
             </span>
             <div class="legend-text">
-              Colocalization Link <span class="legend-muted">(ARG–MGE)</span>
+              Colocalization Edge <span class="legend-muted">(ARG–MGE)</span>
             </div>
           </div>
 
@@ -421,7 +455,7 @@
               </svg>
             </span>
             <div class="legend-text">
-              Temporal Link <span class="legend-muted">(same ARG/MGE across timepoints)</span>
+              Temporal Edge <span class="legend-muted">(same ARG/MGE across timepoints)</span>
             </div>
           </div>
         </section>
@@ -481,6 +515,9 @@
           </div>
         </section>
 
+        <div class="legend-divider"></div>
+        <p class="legend-description"><strong>Colocalization View:</strong> Nodes are displayed in corresponding MGE group shape and node sizes are proportional to the patient count.</p>
+        <p class="legend-description"><strong>ARG-MGE Interaction View:</strong> Colocalization edge thickness is proportional to the patient count.</p>
       </div>
     </div>
   </div>

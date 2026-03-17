@@ -1369,6 +1369,29 @@ function positionFab() {
 
 
 
+document.addEventListener("DOMContentLoaded", function () {
+  const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+  const popoverList = [...popoverTriggerList].map(el => {
+    return new bootstrap.Popover(el, {
+      container: 'body'
+    });
+  });
+
+  // Optional: keep only one popover open at a time
+  document.querySelectorAll('.help-icon').forEach(btn => {
+    btn.addEventListener('click', function () {
+      popoverList.forEach(pop => {
+        const triggerEl = pop._element;
+        if (triggerEl !== btn) {
+          pop.hide();
+        }
+      });
+    });
+  });
+});
+
+
+
 // --- EVENT LISTENERS ---
 d3.select("#dataset").on("change", function() { loadAndRenderGraph(this.value); });
 d3.select("#diseaseFilter").on("change", applyFiltersAndDraw);

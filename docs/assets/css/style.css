@@ -275,17 +275,23 @@ table {
    Legend Modal 
    ========================= */
 
+.modal{
+  top: 10%;
+}
+
 .legend-modal{
-  border-radius: 14px;
+  border-radius: 10px;
   font-family: "Inter", system-ui;
 }
 
 #legendModal .modal-dialog{
-  max-width: 560px;
+  max-width: 420px;
 }
 
 #legendModal .modal-header{
   padding: 0.8rem 1rem;
+  background-color: #e2e5e7;
+  border: 0.5px solid #c0c0c3;
 }
 
 #legendModal .modal-title{
@@ -296,6 +302,7 @@ table {
 
 #legendModal .modal-body{
   padding: 0.9rem 1rem 1rem;
+  border: 1px solid #c0c0c3;
 }
 
 /* Blocks + dividers */
@@ -336,31 +343,33 @@ table {
 .legend-text{
   font-size: 0.92rem;
   line-height: 1.25;
+  font-weight: 600;
+  color: #555;
 }
 
 .legend-muted{
-  color: #6c757d;
+  color: #5f666c;
   font-weight: 400;
 }
 
 /* Shape icons */
 .legend-icon{
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   color: #555;
   display: inline-block;
 }
 
 .legend-icon svg{
   width: 100%;
-  height: 100%;
+  height: 90%;
   display: block;
 }
 
 /* Edge swatches (dotted + arrow) */
 .legend-swatch{
   width: 40px;
-  height: 25px;
+  height: 20px;
   display: inline-block;
   color: #333;        /* default */
 }
@@ -459,4 +468,41 @@ table {
   opacity: 0.7;
   font-size: 18px;
   letter-spacing: 3px;
+}
+
+
+/* Label with help icon */
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
+.help-icon {
+  width: 12px;
+  height: 12px;
+  border: 0.1px solid #9aa0a6;
+  border-radius: 50%;
+  background: #fff;
+  color: #555;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 0.8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.help-icon:hover {
+  background: #f3f4f6;
+  color: #222;
+  border-color: #6c757d;
+}
+
+.help-icon:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
 }
