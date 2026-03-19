@@ -40,12 +40,11 @@
   <div class="p-3 border-bottom bg-white">
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
       <div>
+        <h2 class="mb-0 fw-semibold">
+        Stacked patient count distribution by temporal status of colocalizations        </h2>
         <div class="d-flex align-items-center gap-2">
-          <h2 id="chartTitle" class="mb-0 fw-semibold">ARG–MGE Colocalization Dynamics</h2>
+          <h4 id="chartTitle" class="mb-0 fw-semibold text-muted">ARG–MGE Colocalization Dynamics</h4>
           <span class="badge rounded-pill text-bg-light border" id="pageBadge">Page 1/1</span>
-        </div>
-        <div class="text-muted small mt-1">
-          Stacked patient counts by temporal status for colocalizations.
         </div>
       </div>
 
@@ -102,12 +101,11 @@
 const width = 800, height = 300;
 const margin = { top: 10, right: 40, bottom: 100, left: 80 };
 const colorMap = {
-  persisted:   "#3B75AF", // soft royal blue
-  emerged:     "#E3B23C", // warm golden peach
-  disappeared: "#3FA67A", // mint teal
-  transferred: "#D95F6A"  // coral rose
+  persisted:   "#3F6AA3",
+  emerged:     "#E6D21F",
+  disappeared: "#5F9F7A",
+  transferred: "#4F3B8F"
 };
-
 
 const keys = Object.keys(colorMap);
 const pageSize = 25;
@@ -273,7 +271,7 @@ function drawPage() {
     .attr("y", innerH / 2)
     .attr("transform", `rotate(-90, ${-48}, ${innerH / 2})`)
     .style("fill", "#495057")
-    .style("font-size", "10px")
+    .style("font-size", "8px")
     .style("font-weight",800)
     .text("Patient Count");
 
@@ -338,7 +336,7 @@ function drawPage() {
       .attr("text-anchor", "middle")
       .attr("x", d => x(d.colocalization) + x.bandwidth() / 2)
       .attr("y", d => y(d.viewTotal) - 6)
-      .style("font-size", "10px")
+      .style("font-size", "8px")
       .style("font-weight", 500)
       .style("fill", "#111827")
       .text(d => d3.format(",")(d.viewTotal));
@@ -357,7 +355,7 @@ segmentLabels.selectAll("text")
   .attr("text-anchor", "middle")
   .attr("x", d => x(d.data.colocalization) + x.bandwidth() / 2)
   .attr("y", d => (y(d[0]) + y(d[1])) / 2) // center of segment
-  .style("font-size", "10px")
+  .style("font-size", "8px")
   .style("font-weight", 400)
   .style("fill", "#111827") 
   .style("pointer-events", "none")
@@ -432,7 +430,7 @@ d3.json("json/temporal_dynamics_disease.json").then(rawData => {
     .attr("value", d => d)
     .text(d => diseaseNames[d] || d);
 
-  const defaultDisease = diseases.includes("Melanoma") ? "Melanoma" : diseases[0];
+  const defaultDisease = diseases.includes("rCDI") ? "rCDI" : diseases[0];
 
   barSelect.property("value", defaultDisease);
   setDisease(defaultDisease);

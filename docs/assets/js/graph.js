@@ -832,7 +832,8 @@ function updateVisualization(data) {
       return [vb.x + vb.width / 2, vb.y + vb.height / 2];
     }
     const [cx, cy] = getCenter();
-
+    
+    showGraphLoadingBanner();
     // --- simulation ---
     const sim = d3.forceSimulation(simNodes)
       .force("link", d3.forceLink(simLinks).id(d => d.id).distance(d => d.isColo ? 40 : 60))
@@ -845,8 +846,8 @@ function updateVisualization(data) {
       .alphaDecay(0.03)
       .on("tick", ticked)
       .on("end", () => {
-        console.log("simulation finished");
-      });;
+        hideGraphLoadingBanner();
+      });
 
     function ticked() {
       linkSelection.attr("d", d => linkArc(d));
@@ -1594,6 +1595,20 @@ function restrictLinksToVisibleNodesRobust(visibleNodes, allLinks) {
     const t = typeof l.target === "object" ? l.target.id : l.target;
     return visible.has(s) && visible.has(t);
   });
+}
+
+
+function showGraphLoadingBanner(message = "Graph is stabilizing...") {
+  const banner = document.getElementById("graph-loading-banner");
+  if (!banner) return;
+  banner.textContent = message;
+  banner.classList.remove("d-none");
+}
+
+function hideGraphLoadingBanner() {
+  const banner = document.getElementById("graph-loading-banner");
+  if (!banner) return;
+  banner.classList.add("d-none");
 }
 
 const fab = document.getElementById("zoom-fab");

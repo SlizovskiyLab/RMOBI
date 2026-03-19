@@ -546,3 +546,42 @@ table {
   color: #555;
   word-break: break-word;
 }
+
+
+.graph-loading-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 999px;
+
+  color: white;
+
+  background: linear-gradient(135deg, #5bab8a, #1f58b3);
+
+  border: none;
+
+  box-shadow: 0 6px 18px rgba(59,130,246,0.35);
+}
+
+.graph-loading-banner {
+  animation: fadeSlide 0.3s ease;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.graph-panel {
+  position: relative;
+}
