@@ -388,25 +388,22 @@ function applyFiltersAndDraw() {
         workingLinks,
         filters
     );
-
-    let seedNodeIds = getSeedNodeIds(workingNodes, filters, strictlyFilteredNodeIds);
-
     let finalVisibleNodeIds;
 
-    if (filters.mgeGroup !== "all" || filters.argSearchTerm || filters.mgeSearchTerm) {
-        if (seedNodeIds.size === 0) {
-            finalVisibleNodeIds = new Set();
-        } else {
-            // IMPORTANT: use workingLinks, not original links
-            const neighborIds = getNeighborIds(workingLinks, seedNodeIds);
-            const allowedNeighbors = [...neighborIds].filter(id => strictlyFilteredNodeIds.has(id));
-            const allowedSeeds = [...seedNodeIds].filter(id => strictlyFilteredNodeIds.has(id));
-            finalVisibleNodeIds = new Set([...allowedSeeds, ...allowedNeighbors]);
-        }
+    if (currentGraphKey.includes("graph2")) {
+        finalVisibleNodeIds = getVisibleNodeIdsForGraph2(
+            workingNodes,
+            filters,
+            strictlyFilteredNodeIds
+        );
     } else {
-        finalVisibleNodeIds = strictlyFilteredNodeIds;
+        finalVisibleNodeIds = getVisibleNodeIdsFromArgMgeFilters(
+            workingNodes,
+            workingLinks,
+            filters,
+            strictlyFilteredNodeIds
+        );
     }
-
     // -------------------------------------------------
     // STEP 4: Build final nodes/links from working sets
     // -------------------------------------------------
@@ -498,61 +495,131 @@ function getStrictlyFilteredNodeIds(nodes, links, filters) {
     return visibleNodeIds;
 }
 
-function getSeedNodeIds(nodes, filters, availableNodeIds) {
-    let mgeGroupSeedIds = new Set();
-    let searchSeedIds = new Set();
+function getMatchedArgIds(nodes, filters, availableNodeIds) {
+    const matched = new Set();
 
-    const availableNodes = nodes.filter(n => availableNodeIds.has(n.id));
+    nodes.forEach(n => {
+        if (!availableNodeIds.has(n.id)) return;
+        if (!n.isARG) return;
 
-    if (filters.mgeGroup !== 'all') {
-        availableNodes.forEach(n => {
-            if (n.mgeGroup === filters.mgeGroup) {
-                mgeGroupSeedIds.add(n.id);
-            }
-        });
-    }
+        const label = (n.label || "").toLowerCase();
 
-    const hasArgSearch = !!filters.argSearchTerm;
-    const hasMgeSearch = !!filters.mgeSearchTerm;
-
-    if (hasArgSearch || hasMgeSearch) {
-        availableNodes.forEach(n => {
-            const label = n.label ? n.label.toLowerCase() : "";
-            if (hasArgSearch && n.isARG && label.includes(filters.argSearchTerm)) {
-                searchSeedIds.add(n.id);
-            }
-            if (hasMgeSearch && !n.isARG && label.includes(filters.mgeSearchTerm)) {
-                searchSeedIds.add(n.id);
-            }
-        });
-    }
-
-    const isMgeGroupFiltered = filters.mgeGroup !== 'all';
-    const isSearchFiltered = hasArgSearch || hasMgeSearch;
-
-    if (isMgeGroupFiltered && isSearchFiltered) {
-        return new Set([...mgeGroupSeedIds].filter(id => searchSeedIds.has(id)));
-    }
-    if (isMgeGroupFiltered) {
-        return mgeGroupSeedIds;
-    }
-    if (isSearchFiltered) {
-        return searchSeedIds;
-    }
-    
-    return new Set();
-}
-
-function getNeighborIds(links, seedNodeIds) {
-    const neighborIds = new Set();
-    links.forEach(link => {
-        const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-        const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-        if (seedNodeIds.has(sourceId)) neighborIds.add(targetId);
-        if (seedNodeIds.has(targetId)) neighborIds.add(sourceId);
+        if (!filters.argSearchTerm || label.includes(filters.argSearchTerm)) {
+            matched.add(n.id);
+        }
     });
-    return neighborIds;
+
+    return matched;
 }
+
+function getMatchedMgeIds(nodes, filters, availableNodeIds) {
+    const matched = new Set();
+
+    nodes.forEach(n => {
+        if (!availableNodeIds.has(n.id)) return;
+        if (n.isARG) return;
+
+        const label = (n.label || "").toLowerCase();
+
+        const groupOk =
+            filters.mgeGroup === "all" || n.mgeGroup === filters.mgeGroup;
+
+        const searchOk =
+            !filters.mgeSearchTerm || label.includes(filters.mgeSearchTerm);
+
+        if (groupOk && searchOk) {
+            matched.add(n.id);
+        }
+    });
+
+    return matched;
+}
+
+function getVisibleNodeIdsFromArgMgeFilters(nodes, links, filters, availableNodeIds) {
+    const hasArgFilter = !!filters.argSearchTerm;
+    const hasMgeFilter = filters.mgeGroup !== "all" || !!filters.mgeSearchTerm;
+
+    // no ARG/MGE-specific filters → just keep everything already available
+    if (!hasArgFilter && !hasMgeFilter) {
+        return new Set(availableNodeIds);
+    }
+
+    const matchedArgIds = getMatchedArgIds(nodes, filters, availableNodeIds);
+    const matchedMgeIds = getMatchedMgeIds(nodes, filters, availableNodeIds);
+
+    const visibleIds = new Set();
+
+    links.forEach(link => {
+        const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+        const targetId = typeof link.target === "object" ? link.target.id : link.target;
+
+        if (!availableNodeIds.has(sourceId) || !availableNodeIds.has(targetId)) return;
+
+        const sourceNode = nodes.find(n => n.id === sourceId);
+        const targetNode = nodes.find(n => n.id === targetId);
+        if (!sourceNode || !targetNode) return;
+
+        let argId = null;
+        let mgeId = null;
+
+        if (sourceNode.isARG && !targetNode.isARG) {
+            argId = sourceId;
+            mgeId = targetId;
+        } else if (!sourceNode.isARG && targetNode.isARG) {
+            argId = targetId;
+            mgeId = sourceId;
+        } else {
+            // For temporal edges or same-type edges, keep only later if incident to visible nodes
+            return;
+        }
+
+        const argOk = !hasArgFilter || matchedArgIds.has(argId);
+        const mgeOk = !hasMgeFilter || matchedMgeIds.has(mgeId);
+
+        if (argOk && mgeOk) {
+            visibleIds.add(argId);
+            visibleIds.add(mgeId);
+        }
+    });
+
+    return visibleIds;
+}
+
+function getVisibleNodeIdsForGraph2(nodes, filters, availableNodeIds) {
+    const visibleIds = new Set();
+
+    nodes.forEach(n => {
+        if (!availableNodeIds.has(n.id)) return;
+
+        const label = (n.label || "").toLowerCase();
+
+        // graph2 node label is typically ARG+MGE
+        let argLabel = "";
+        let mgeLabel = label;
+
+        if (label.includes("+")) {
+            const parts = label.split("+");
+            argLabel = (parts[0] || "").trim();
+            mgeLabel = parts.slice(1).join("+").trim();
+        }
+
+        const argOk =
+            !filters.argSearchTerm || argLabel.includes(filters.argSearchTerm);
+
+        const mgeSearchOk =
+            !filters.mgeSearchTerm || mgeLabel.includes(filters.mgeSearchTerm);
+
+        const mgeGroupOk =
+            filters.mgeGroup === "all" || n.mgeGroup === filters.mgeGroup;
+
+        if (argOk && mgeSearchOk && mgeGroupOk) {
+            visibleIds.add(n.id);
+        }
+    });
+
+    return visibleIds;
+}
+
 
 // --- CENTERING FUNCTION ---
 function centerOnNodes(svg, zoom, nodes, width, height) {
@@ -681,30 +748,34 @@ function updateVisualization(data) {
         .attr("marker-end", d => d.isColo ? null : `url(#arrow-${(d.color || "#999").replace("#", "")})`)
         .attr("stroke-width", d => Math.max(1, d.penwidth || 1))
         .attr("stroke-dasharray", d => d.isColo ? null : "4 2")
+        .on("click", function(event, d) {
+          event.stopPropagation();
+          showLinkDetails(d);
+       })
 
-        .on("mouseover", function(event, d) {
-            if (!currentGraphKey.includes("graph1")) return;  // Only graph1.json
-            if (!d.isColo) return;  // Only colocalization links
+        // .on("mouseover", function(event, d) {
+        //     if (!currentGraphKey.includes("graph1")) return;  // Only graph1.json
+        //     if (!d.isColo) return;  // Only colocalization links
 
-            const count = d.individualCount ?? d.patientCount ?? 0;
+        //     const count = d.individualCount ?? d.patientCount ?? 0;
 
-            tooltip
-                .style("opacity", 1)
-                .html(`<strong>Patients:</strong> ${count}`);
+        //     tooltip
+        //         .style("opacity", 1)
+        //         .html(`<strong>Patients:</strong> ${count}`);
 
-            d3.select(this).attr("stroke-width", (d.penwidth || 2) + 2);
-        })
-        .on("mousemove", function(event) {
-            tooltip
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 20) + "px");
-        })
-        .on("mouseout", function(event, d) {
-            if (!currentGraphKey.includes("graph1")) return;
+        //     d3.select(this).attr("stroke-width", (d.penwidth || 2) + 2);
+        // })
+        // .on("mousemove", function(event) {
+        //     tooltip
+        //         .style("left", (event.pageX + 10) + "px")
+        //         .style("top", (event.pageY - 20) + "px");
+        // })
+        // .on("mouseout", function(event, d) {
+        //     if (!currentGraphKey.includes("graph1")) return;
 
-            tooltip.style("opacity", 0);
-            d3.select(this).attr("stroke-width", d.penwidth || 2);
-        });
+        //     tooltip.style("opacity", 0);
+        //     d3.select(this).attr("stroke-width", d.penwidth || 2);
+        // });
 
 
     // --- nodes ---
@@ -737,14 +808,13 @@ function updateVisualization(data) {
         .attr("fill", d => d.color)
         .attr("stroke", d => "#999")
         .attr("stroke-width", 0.5)
+        .style("cursor", "pointer")
+        .on("click", function(event, d) {
+            event.stopPropagation();
+            showNodeDetails(d);
+        })
         .call(d3.drag().on("start", dragstart).on("drag", dragged).on("end", dragend));
 
-    nodeSelection.append("title").text(d => {
-        if (currentGraphKey.includes("graph2")) {
-            return `${d.label}\nPatients: ${d.patientCount ?? 0}`;
-        }
-        return d.label;
-    });
 
     // --- labels ---
     const labelSelection = g.selectAll("text.label")
@@ -785,6 +855,7 @@ function updateVisualization(data) {
     }
 
     updateLinkVisibility();
+    svg.on("click", hideNodeDetails);
 }
 
 
@@ -954,6 +1025,204 @@ function populateSearchSuggestionsFromNodes(nodes) {
     option.value = label;
     mgeList.appendChild(option);
   });
+}
+
+
+
+function getNodeDegree(node, links) {
+  const nodeId = node.id;
+  let degree = 0;
+
+  links.forEach(l => {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+    if (s === nodeId || t === nodeId) degree++;
+  });
+
+  return degree;
+}
+
+function getConnectedNeighborLabels(node, nodes, links, maxNeighbors = 12) {
+  const nodeId = node.id;
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+  const labels = [];
+
+  links.forEach(l => {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+
+    if (s === nodeId && nodeById.has(t)) {
+      labels.push(nodeById.get(t).label || t);
+    } else if (t === nodeId && nodeById.has(s)) {
+      labels.push(nodeById.get(s).label || s);
+    }
+  });
+
+  const unique = [...new Set(labels)];
+  const shown = unique.slice(0, maxNeighbors);
+  const extra = unique.length > maxNeighbors ? ` (+${unique.length - maxNeighbors} more)` : "";
+
+  return shown.join(", ") + extra;
+}
+
+// Show, node details, name, mge group for mges arg group for args. 
+function buildNodeDetailsHTML(node) {
+  const isGraph2 = currentGraphKey.includes("graph2");
+  const links = currentRenderedData?.links || [];
+  const nodes = currentRenderedData?.nodes || [];
+
+  const degree = getNodeDegree(node, links);
+  const neighbors = getConnectedNeighborLabels(node, nodes, links);
+
+  // graph2 parent nodes: ARG-MGE aggregate nodes
+  if (isGraph2) {
+    let argLabel = "";
+    let mgeLabel = node.label || "";
+
+    if (typeof node.label === "string" && node.label.includes("+")) {
+      const parts = node.label.split("+");
+      argLabel = parts[0]?.trim() || "";
+      mgeLabel = parts.slice(1).join("+").trim() || "";
+    }
+
+    const diseaseCounts = node.diseaseCounts || {};
+    const diseaseText = Object.entries(diseaseCounts)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+
+    const patientCount = node.patientCount ??
+      Object.values(diseaseCounts).reduce((sum, v) => sum + (Number(v) || 0), 0);
+
+    return `
+      ${renderDetailRow("ARG Name", argLabel)}
+      ${renderDetailRow("ARG Group", node.argGroup || "")}
+      ${renderDetailRow("MGE Name", mgeLabel)}
+      ${renderDetailRow("MGE Group", node.mgeGroup || "")}
+      ${renderDetailRow("Timepoint", formatTimepointLabel(node.timepoint))}
+      ${renderDetailRow("Patient Count", patientCount)}
+      ${renderDetailRow("Disease Counts", diseaseText || "")}
+      ${renderDetailRow("Degree", degree)}
+      ${renderDetailRow("Connected Neighbors", neighbors || "")}
+    `;
+  }
+
+  // graph1 regular nodes
+  const isARG = !!node.isARG;
+
+  return `
+    ${renderDetailRow("Name", node.label || "")}
+    ${renderDetailRow("Type", isARG ? "ARG" : "MGE")}
+    ${
+      isARG
+        ? renderDetailRow("ARG Group", node.argResistanceGroup || "")
+        : renderDetailRow("MGE Group", node.mgeGroup || "")
+    }
+    ${renderDetailRow("Timepoint", formatTimepointLabel(node.timepoint))}
+    ${renderDetailRow("Degree", degree)}
+    ${renderDetailRow("Connected Neighbors", neighbors || "")}
+  `;
+}
+
+function buildLinkDetailsHTML(link) {
+  const nodes = currentRenderedData?.nodes || [];
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+  const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+  const targetId = typeof link.target === "object" ? link.target.id : link.target;
+
+  const sourceNode = nodeById.get(sourceId);
+  const targetNode = nodeById.get(targetId);
+
+  const sourceLabel = sourceNode?.label || sourceId || "";
+  const targetLabel = targetNode?.label || targetId || "";
+
+  const sourceTp = link.sourceTimepoint;
+  const targetTp = link.targetTimepoint;
+
+  if (link.isColo && currentGraphKey.includes("graph1")) {
+    const dc = link.diseaseCounts || {};
+    const diseaseText = Object.entries(dc)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+
+    const patientCount =
+      link.patientCount ??
+      Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0) ??
+      link.individualCount ??
+      0;
+
+    return `
+      ${renderDetailRow("Link Type", "Colocalization")}
+      ${renderDetailRow("ARG", sourceLabel)}
+      ${renderDetailRow("MGE", targetLabel)}
+      ${renderDetailRow("Source Timepoint", formatTimepointLabel(sourceTp))}
+      ${renderDetailRow("Target Timepoint", formatTimepointLabel(targetTp))}
+      ${renderDetailRow("Patient Count", patientCount)}
+      ${renderDetailRow("Disease Counts", diseaseText || "")}
+    `;
+  }
+
+  return `
+    ${renderDetailRow("Link Type", "Temporal")}
+    ${renderDetailRow("Source", sourceLabel)}
+    ${renderDetailRow("Target", targetLabel)}
+    ${renderDetailRow("Source Timepoint", formatTimepointLabel(sourceTp))}
+    ${renderDetailRow("Target Timepoint", formatTimepointLabel(targetTp))}
+  `;
+}
+
+
+function showNodeDetails(node) {
+  const panel = document.getElementById("node-details-panel");
+  const body = document.getElementById("node-details-body");
+  
+  if (!panel || !body) return;
+
+  body.innerHTML = buildNodeDetailsHTML(node);
+  panel.classList.remove("d-none");
+}
+
+function hideNodeDetails() {
+  const panel = document.getElementById("node-details-panel");
+  if (!panel) return;
+  panel.classList.add("d-none");
+}
+
+function showLinkDetails(link) {
+  const panel = document.getElementById("node-details-panel");
+  const body = document.getElementById("node-details-body");
+  if (!panel || !body) return;
+
+  body.innerHTML = buildLinkDetailsHTML(link);
+  panel.classList.remove("d-none");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatTimepointLabel(timepoint) {
+  const t = Number(timepoint);
+  if (t === 1000) return "Donor";
+  if (t === 0) return "Pre-FMT";
+  if (t > 0 && t < 31) return `Post-FMT (${t} d)`;
+  if (t > 30 && t < 61) return `Post-FMT (${t} d)`;
+  if (t > 60) return `Post-FMT (${t} d)`;
+  return String(timepoint ?? "");
+}
+
+function renderDetailRow(label, value) {
+  return `
+    <div class="node-details-row">
+      <span class="node-details-label">${escapeHtml(label)}:</span>
+      <span class="node-details-value">${escapeHtml(value)}</span>
+    </div>
+  `;
 }
 
 
@@ -1368,6 +1637,13 @@ function positionFab() {
 }
 
 
+function linkPath(d) {
+  if (d.isColo) {
+    return `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`;
+  }
+  return linkArc(d);
+}
+
 
 document.addEventListener("DOMContentLoaded", function () {
   const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
@@ -1410,6 +1686,7 @@ document.getElementById("downloadPdfBtn").addEventListener("click", downloadCurr
 document.getElementById("downloadDataBtn").addEventListener("click", downloadCurrentGraphAsText);
 document.getElementById("argSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 document.getElementById("mgeSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
+document.getElementById("closeNodeDetails")?.addEventListener("click", hideNodeDetails);
 
 // Update on scroll + resize + initial load
 window.addEventListener("scroll", positionFab, { passive: true });

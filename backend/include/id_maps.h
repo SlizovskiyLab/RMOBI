@@ -19,12 +19,14 @@ std::string getARGName(int id);
 std::string getMGEName(int id);
 std::string getMGENameForLabel(int id);
 std::string getARGGroupName(int id);
-std::string getARGResistance(const std::string& name);
+std::string getARGResistance(int id);
 std::string getMGEGroupName(int id);
+std::string getARGResistanceGroup(int id);
 
 int getARGId(const std::string& name);
 int getMGEId(const std::string& name);
 int getMGEIdByName(const std::string& name);
 int getARGGroupId(const std::string& name);
+int getARGResistanceId(const std::string& name);
 
 #endif

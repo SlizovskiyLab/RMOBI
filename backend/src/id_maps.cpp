@@ -33,7 +33,11 @@ std::string getMGEGroupName(int id) {
     return it != mgeGroupMap.end() ? it->second : "Unknown MGE Group";
 }
 
-
+std::string getARGResistance(int id) {
+    auto it = argResistanceMap.find(id);
+    return it != argResistanceMap.end() ? it->second : "Unknown Resistance";
+}
+    
 int getARGId(const std::string& name) {
     for (const auto& [id, argName] : argIdMap) {
         if (argName == name)
@@ -69,6 +73,15 @@ int getARGGroupId(const std::string& name) {
     }
     return -1; // Not found
 }
+
+int getARGResistanceId(const std::string& name) {
+    for (const auto& [id, resistance] : argResistanceMap) {
+        if (resistance == name)
+            return id;
+    }
+    return -1; // Not found
+}
+
 
 const std::unordered_map<int, std::string> argIdMap = {
     {1, "A16S"},

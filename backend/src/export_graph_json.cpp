@@ -135,7 +135,9 @@ bool exportGraphToJsonSimple(const Graph& g,
             {"label",     getLabel(n)},
             {"isARG",     n.isARG},
             {"timepoint", static_cast<int>(n.timepoint)},
-            {"mgeGroup",  mgeGroup}
+            {"mgeGroup",  mgeGroup},
+            {"argResistance", n.isARG ? getARGResistance(n.id) : ""},
+            {"argResistanceGroup", n.isARG ? getARGGroupName(n.id) : ""}
         });
     }
 
@@ -177,6 +179,8 @@ bool exportParentGraphToJson(const Graph& g,
     // Aggregation for node payload
     std::map<std::tuple<int,int,Timepoint>, std::string> labelByKey;
     std::map<std::tuple<int,int,Timepoint>, std::string> mgeGroupByKey;
+    std::map<std::tuple<int,int,Timepoint>, std::string> argResistanceByKey;
+    std::map<std::tuple<int,int,Timepoint>, std::string> argGroupByKey;
     std::map<std::tuple<int,int,Timepoint>, std::map<std::string, std::set<int>>> diseaseToPatientsByKey;
 
     // patient -> (arg,mge) -> set<tp>
@@ -208,6 +212,9 @@ bool exportParentGraphToJson(const Graph& g,
                 if (!uniqueParents.count(key)) {
                     uniqueParents[key] = "Parent_" + std::to_string(++counter);
                     mgeGroupByKey[key] = getMGEGroupName(mgeId);
+                    argResistanceByKey[key] = getARGResistance(argId);
+                    argGroupByKey[key] = getARGGroupName(argId);
+
                     labelByKey[key] = showLabels
                         ? (getARGName(argId) + "+" + getMGENameForLabel(mgeId))
                         : "";
@@ -243,6 +250,8 @@ bool exportParentGraphToJson(const Graph& g,
             {"mgeId", mgeId},
             {"timepoint", tpJson(tp)},   // numeric, safe
             {"mgeGroup", mgeGroupByKey[key]},
+            {"argResistance", argResistanceByKey[key]},
+            {"argGroup", argGroupByKey[key]},
             {"diseaseCounts", diseaseCounts}
         });
     }
