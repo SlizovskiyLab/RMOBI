@@ -746,7 +746,10 @@ function updateVisualization(data) {
         .attr("class", "link")
         .attr("stroke", d => d.color || "#999")
         .attr("marker-end", d => d.isColo ? null : `url(#arrow-${(d.color || "#999").replace("#", "")})`)
-        .attr("stroke-width", d => Math.max(1, d.penwidth || 1))
+        // For colocalization edges, use weight-based pen width; for temporal edges, use default or specified pen width with a minimum of 1
+        .attr("stroke-width", d => {
+          if (d.isColo) {return getPenWidth(d.patientCount ?? d.individualCount ?? 1);}
+          return Math.max(1, d.penwidth || 1);})
         .attr("stroke-dasharray", d => d.isColo ? null : "4 2")
         .on("click", function(event, d) {
           event.stopPropagation();
