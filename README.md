@@ -1,7 +1,11 @@
 # RMOBI: a Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-orange.svg)
 
-RMOBI is a web-based visualization framework designed for constructing and analyzing large scale heterogeneous temporal networks of antimicrobial resistance genes (ARGs) and mobile genetic elements (MGEs) across fecal microbiota transplantation (FMT) phases. The primary component is the interactive web interface, publicly accessible at [https://slizovskiylab.github.io/RMOBI/](https://slizovskiylab.github.io/RMOBI/), while a companion C++ engine is used to generate the structured network and summary outputs used by the site.
+RMOBI is a web-based visualization resource designed for analyzing and exploring large scale heterogeneous temporal networks of antimicrobial resistance genes (ARGs) and mobile genetic elements (MGEs) across fecal microbiota transplantation (FMT) phases. The primary component is the interactive web interface, publicly accessible at [https://slizovskiylab.github.io/RMOBI/](https://slizovskiylab.github.io/RMOBI/), while a companion C++ engine is used to generate the structured network and summary outputs used by the site.
+
+![Overview Figure](docs/assets/img/Figure%201.png)
+
+Image: Created in BioRender. Andhavarapu, S. (2026) https://BioRender.com/9z2bx46 
 
 ## 1. C++ Backend for Graph Construction and Analysis
 
