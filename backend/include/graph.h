@@ -72,14 +72,13 @@ struct Edge {
     
 
     bool operator<(const Edge& other) const {
-        return std::tie(source, target, isColo, weight) < std::tie(other.source, other.target, other.isColo, other.weight);
+        return std::tie(source, target, isColo) < std::tie(other.source, other.target, other.isColo);
     }
 
     bool operator==(const Edge& other) const {
         return source == other.source &&
                target == other.target &&
-               isColo == other.isColo &&
-               weight == other.weight;
+               isColo == other.isColo;
     }
 
 };

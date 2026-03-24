@@ -39,9 +39,11 @@ void addEdge(Graph& graph, const Node& src, const Node& tgt, bool isColo, int pa
             Edge modified_edge = *it;
             graph.edges.erase(it);
             modified_edge.weight++;
+            if (patientID != -1) modified_edge.individuals.insert(patientID);  // added to track patient ID for temporal edges
             graph.edges.insert(modified_edge);
         } else {
             search_edge.weight = 1;
+            if (patientID != -1) search_edge.individuals.insert(patientID);    // added to track patient ID for temporal edges
             graph.edges.insert(search_edge);
         }
     }
@@ -159,7 +161,7 @@ void addTemporalEdges(Graph& graph) {
             for (size_t i = 0; i < nodes.size() - 1; ++i) {
                 const Node& sourceNode = nodes[i];
                 const Node& targetNode = nodes[i + 1];
-                addEdge(graph, sourceNode, targetNode, false, -1);
+                addEdge(graph, sourceNode, targetNode, false, patientID);
             }
         }
     }

@@ -21,7 +21,7 @@ namespace std {
 
 // The signature of parseData is updated to include a map for patient-disease associations.
 void parseData(const std::filesystem::path& filename, Graph& graph, std::map<int, std::string>& patientToDiseaseMap, bool includeSNPConfirmationARGs, bool excludeMetals);
-void addEdge(Graph& graph, const Node& src, const Node& tgt, bool isColo, int patientID = -1);
+void addEdge(Graph& graph, const Node& src, const Node& tgt, bool isColo, int patientID);
 void addTemporalEdges(Graph& graph);
 
 #endif // PARSER_H
