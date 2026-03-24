@@ -1143,18 +1143,19 @@ function buildLinkDetailsHTML(link) {
   const sourceTp = link.sourceTimepoint;
   const targetTp = link.targetTimepoint;
 
+  
+  const dc = link.diseaseCounts || {};
+  const diseaseText = Object.entries(dc)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
+
+  const patientCount =
+    link.patientCount ??
+    Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0) ??
+    link.individualCount ??
+    0;
+  
   if (link.isColo && currentGraphKey.includes("graph1")) {
-    const dc = link.diseaseCounts || {};
-    const diseaseText = Object.entries(dc)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(", ");
-
-    const patientCount =
-      link.patientCount ??
-      Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0) ??
-      link.individualCount ??
-      0;
-
     return `
       ${renderDetailRow("Link Type", "Colocalization")}
       ${renderDetailRow("ARG", sourceLabel)}
@@ -1172,6 +1173,8 @@ function buildLinkDetailsHTML(link) {
     ${renderDetailRow("Target", targetLabel)}
     ${renderDetailRow("Source Timepoint", formatTimepointLabel(sourceTp))}
     ${renderDetailRow("Target Timepoint", formatTimepointLabel(targetTp))}
+    ${renderDetailRow("Patient Count", patientCount)}
+    ${renderDetailRow("Disease Counts", diseaseText || "")}
   `;
 }
 
@@ -1214,9 +1217,9 @@ function formatTimepointLabel(timepoint) {
   const t = Number(timepoint);
   if (t === 1000) return "Donor";
   if (t === 0) return "Pre-FMT";
-  if (t > 0 && t < 31) return `Post-FMT (${t} d)`;
-  if (t > 30 && t < 61) return `Post-FMT (${t} d)`;
-  if (t > 60) return `Post-FMT (${t} d)`;
+  if (t > 0 && t < 31) return `Post-FMT-30`;
+  if (t > 30 && t < 61) return `Post-FMT-60`;
+  if (t > 60) return `Post-FMT-60+`;
   return String(timepoint ?? "");
 }
 

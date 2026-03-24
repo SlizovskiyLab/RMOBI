@@ -70,23 +70,24 @@
   <div class="col-md-12">
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
-      <h2>Input</h2>
-     <p> As the input data file we provide a CSV file, where each row represents a unique ARG–MGE colocalization event observed in a patient sample. The file must contain the following columns: </p>
-      <h4>Input File Structure</h4>
-      <pre><code>
-  Patient ID, Disease type, AMR ID, MGE ID, Donor, PreFMT, PostFMT(timepoints)
-      </code></pre>
+      <h2>Network Interpretation</h2>
+     <p> RMOBI provides two complementary views: </p>
+      <h6>1. ARG-MGE Interaction View</h6>
+      <ul class="clean-list">
+        <li><strong>Nodes:</strong> represent ARGs and MGEs. </li>
+        <li><strong>Edges:</strong> represent colocalization events observed in a specific patient at a specific time point.</li>
+        <li><strong>Temporal edges:</strong> Connect the same entity (ARG or MGE) across time points within the same patient, showing how it persists or changes over time.</li>
+      </ul>
+  
+      <h6>2. Colocalization View</h6>
+      <ul class="clean-list">
+        <li><strong>Nodes:</strong> represent ARG–MGE colocalizations.</li>
+        <li><strong>Edges:</strong> represent temporal connections, linking the same colocalization across different time points.</li>
+      </ul>
 
-    <ul class="clean-list">
-      <li><strong>Patient ID:</strong> Unique patient identifier.</li>
-      <li><strong>Disease type:</strong> Melanoma, MDRB, or rCDI.</li>
-      <li><strong>AMR ID:</strong> Classification of the antimicrobial resistance gene.</li>
-      <li><strong>MGE ID:</strong> The mobile genetic element associated with the AMR gene.</li>
-      <li><strong>Donor:</strong> 1 if the colocalization is present in the donor sample; 0 if absent.</li>
-      <li><strong>PreFMT:</strong> 1 if the colocalization is present before FMT; 0 if absent.</li>
-      <li><strong>PostFMT:</strong> 1 if the colocalization is present in any post-FMT timepoint; 0 if absent.</li>
-    </ul>
-
+      <h4>Temporal Structure</h4>
+      <p> For each patient, nodes are grouped by entity (ARG or MGE) and ordered by time point. Directed temporal edges connect consecutive time points for the same entity. If a time point is missing (e.g., pre-FMT), edges connect to the next available time point, preserving the overall timeline
+      </p>
     </div>
   </div>
   </div>
