@@ -469,6 +469,7 @@ void exportColocalizationsToJSONByDisease(
         std::string status;
         if (hasPost && !hasPre && !hasDonor) status = "emerged";
         else if (hasPre && !hasPost && !hasDonor) status = "disappeared";
+        else if (hasPre && !hasPost && hasDonor) status = "disappeared";
         else if (hasDonor && hasPost && !hasPre) status = "transferred";
         else if (hasPre && hasPost) status = "persisted";
         else continue; // skip other patterns

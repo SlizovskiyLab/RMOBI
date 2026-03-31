@@ -585,3 +585,48 @@ table {
 .graph-panel {
   position: relative;
 }
+
+.hub-grid-wrap {
+  overflow-x: auto;
+}
+
+.hub-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+}
+
+.hub-grid-table th,
+.hub-grid-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.hub-grid-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.hub-grid-table td {
+  color: #374151;
+}
+
+.hub-grid-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.hub-grid-table tbody tr:hover {
+  background: #f3f4f6;
+}
+
+.hub-section-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #111827;
+}

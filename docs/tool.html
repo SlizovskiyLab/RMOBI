@@ -335,6 +335,73 @@
                 </button>
             </div>
         </div>
+                <div id="hub-analysis-wrap" class="card shadow-sm mt-3 d-none">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <button
+            class="btn btn-sm btn-outline-dark"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#hub-analysis-collapse"
+            aria-expanded="false"
+            aria-controls="hub-analysis-collapse">
+            Longitudinal Support Analysis
+          </button>
+
+          <button id="downloadHubCsvBtn" class="btn btn-sm btn-outline-dark" type="button">
+            Download Longitudinal Support CSV
+          </button>
+        </div>
+
+        <div id="hub-analysis-collapse" class="collapse">
+          <div class="card-body">
+
+            <div class="hub-section">
+              <div class="hub-section-title">Top 5 MGE Entities</div>
+              <div class="hub-grid-wrap">
+                <table class="hub-grid-table" id="mge-hub-table">
+                  <thead>
+                    <tr>
+                      <th>Label</th>
+                      <th>Group</th>
+                      <th>Visible Instances</th>
+                      <th>Unique Neighbors</th>
+                      <th>Aggregated Degree</th>
+                      <th>Agg. Colo Support</th>
+                      <th>Agg. Temp Support</th>
+                      <th>Stage Span</th>
+                      <th>Temporal Links by Stage</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="hub-section mt-4">
+              <div class="hub-section-title">Top 5 ARG Entities</div>
+              <div class="hub-grid-wrap">
+                <table class="hub-grid-table" id="arg-hub-table">
+                  <thead>
+                     <tr>
+                      <th>Label</th>
+                      <th>Group</th>
+                      <th>Visible Instances</th>
+                      <th>Unique Neighbors</th>
+                      <th>Aggregated Degree</th>
+                      <th>Agg. Colo Support</th>
+                      <th>Agg. Temp Support</th>
+                      <th>Stage Span</th>
+                      <th>Temporal Links by Stage</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
         <div id="node-details-panel" class="node-details-panel d-none">
         <div class="node-details-header">
           <strong>Details</strong>

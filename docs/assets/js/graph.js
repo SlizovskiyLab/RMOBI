@@ -434,6 +434,7 @@ function applyFiltersAndDraw() {
     updateVisualization(currentRenderedData);
     const stats = computeGraphStats(finalNodes, finalLinks);
     renderGraphStats(stats);
+    renderLongitudinalSupportAnalysis(finalNodes, finalLinks);
 }
 
 // -- Disable filters for Colocalization View ---
@@ -1621,6 +1622,319 @@ const fab = document.getElementById("zoom-fab");
 const graphBox = document.getElementById("graph-container");
 
 
+
+let currentHubExportRows = [];
+
+function getEdgeSupport(link) {
+  return Number(link.patientCount ?? link.individualCount ?? 1);
+}
+
+function getNodeKeyForAggregation(node) {
+  // graph1 only
+  return node.label || node.id;
+}
+
+function createEmptyTemporalTransitionCounter() {
+  return {};
+}
+
+function createEmptyEntityMetric(label, isARG, groupValue = "") {
+  return {
+    label,
+    isARG,
+    group: groupValue,
+
+    // instance-level bookkeeping
+    visibleInstanceCount: 0,
+    exactTimepoints: new Set(),
+    stageCategories: new Set(),
+
+    // breadth
+    uniqueNeighborLabels: new Set(),
+    uniqueColoNeighborLabels: new Set(),
+    uniqueTemporalNeighborLabels: new Set(),
+
+    // aggregated counts
+    aggregatedDegree: 0,
+    aggregatedColoDegree: 0,
+    aggregatedTemporalDegree: 0,
+
+    // aggregated weighted support
+    aggregatedColoSupport: 0,
+    aggregatedTemporalSupport: 0,
+
+    // temporal stage exposure
+    temporalTransitions: createEmptyTemporalTransitionCounter()
+  };
+}
+
+function computeLongitudinalSupportGraph1(nodes, links) {
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+  const entityMap = new Map();
+
+  function getOrCreateEntity(node) {
+    const key = `${node.isARG ? "ARG" : "MGE"}::${getNodeKeyForAggregation(node)}`;
+    if (!entityMap.has(key)) {
+      entityMap.set(
+        key,
+        createEmptyEntityMetric(
+          getNodeKeyForAggregation(node),
+          !!node.isARG,
+          node.isARG
+            ? (node.argResistanceGroup || node.argGroup || "")
+            : (node.mgeGroup || "")
+        )
+      );
+    }
+    return entityMap.get(key);
+  }
+
+  // First pass: register visible instances
+  nodes.forEach(node => {
+    const entity = getOrCreateEntity(node);
+    entity.visibleInstanceCount += 1;
+    entity.exactTimepoints.add(Number(node.timepoint));
+    entity.stageCategories.add(getTimepointCategory(node.timepoint));
+  });
+
+  // Second pass: aggregate edges
+  links.forEach(link => {
+    const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+    const targetId = typeof link.target === "object" ? link.target.id : link.target;
+
+    const sourceNode = nodeById.get(sourceId);
+    const targetNode = nodeById.get(targetId);
+    if (!sourceNode || !targetNode) return;
+
+    const sourceEntity = getOrCreateEntity(sourceNode);
+    const targetEntity = getOrCreateEntity(targetNode);
+
+    const weight = getEdgeSupport(link);
+
+    // aggregated degree counts every visible edge touching this entity
+    sourceEntity.aggregatedDegree += 1;
+    targetEntity.aggregatedDegree += 1;
+
+    // unique neighbors aggregated at entity level
+    sourceEntity.uniqueNeighborLabels.add(targetEntity.label);
+    targetEntity.uniqueNeighborLabels.add(sourceEntity.label);
+
+    if (link.isColo) {
+      sourceEntity.aggregatedColoDegree += 1;
+      targetEntity.aggregatedColoDegree += 1;
+
+      sourceEntity.aggregatedColoSupport += weight;
+      targetEntity.aggregatedColoSupport += weight;
+
+      sourceEntity.uniqueColoNeighborLabels.add(targetEntity.label);
+      targetEntity.uniqueColoNeighborLabels.add(sourceEntity.label);
+    } else {
+      sourceEntity.aggregatedTemporalDegree += 1;
+      targetEntity.aggregatedTemporalDegree += 1;
+
+      sourceEntity.aggregatedTemporalSupport += weight;
+      targetEntity.aggregatedTemporalSupport += weight;
+
+      sourceEntity.uniqueTemporalNeighborLabels.add(targetEntity.label);
+      targetEntity.uniqueTemporalNeighborLabels.add(sourceEntity.label);
+
+      const sourceStage = getTimepointCategory(sourceNode.timepoint);
+      const targetStage = getTimepointCategory(targetNode.timepoint);
+
+      const forwardKey = `${sourceStage}->${targetStage}`;
+      const reverseKey = `${sourceStage}->${targetStage}`;
+
+      // because your temporal edges are directed, keep the true direction
+      sourceEntity.temporalTransitions[forwardKey] =
+        (sourceEntity.temporalTransitions[forwardKey] || 0) + 1;
+
+      targetEntity.temporalTransitions[forwardKey] =
+        (targetEntity.temporalTransitions[forwardKey] || 0) + 1;
+      }
+  });
+
+  // finalize sets into counts/strings
+  return [...entityMap.values()].map(entity => ({
+    ...entity,
+    uniqueNeighborCount: entity.uniqueNeighborLabels.size,
+    uniqueColoNeighborCount: entity.uniqueColoNeighborLabels.size,
+    uniqueTemporalNeighborCount: entity.uniqueTemporalNeighborLabels.size,
+    stageSpanCount: entity.stageCategories.size,
+    exactTimepointCount: entity.exactTimepoints.size,
+    exactTimepointList: [...entity.exactTimepoints].sort((a, b) => a - b).join(", "),
+    stageList: [...entity.stageCategories].join(", ")
+  }));
+}
+
+function getTopLongitudinalEntities(metrics, wantARG, topK = 5) {
+  return metrics
+    .filter(m => wantARG ? m.isARG : !m.isARG)
+    .sort((a, b) => {
+      const aScore = a.aggregatedColoSupport + a.aggregatedTemporalSupport;
+      const bScore = b.aggregatedColoSupport + b.aggregatedTemporalSupport;
+
+      if (bScore !== aScore) return bScore - aScore;
+      if (b.uniqueNeighborCount !== a.uniqueNeighborCount) return b.uniqueNeighborCount - a.uniqueNeighborCount;
+      if (b.stageSpanCount !== a.stageSpanCount) return b.stageSpanCount - a.stageSpanCount;
+      return a.label.localeCompare(b.label);
+    })
+    .slice(0, topK);
+}
+
+function formatTemporalTransitions(transitions) {
+  const preferredOrder = [
+    "donor->pre",
+    "donor->post1",
+    "donor->post2",
+    "donor->post3",
+    "pre->post1",
+    "pre->post2",
+    "pre->post3",
+    "post1->post2",
+    "post1->post3",
+    "post2->post3"
+  ];
+
+  const parts = preferredOrder
+    .filter(key => (transitions[key] || 0) > 0)
+    .map(key => `${key}:${transitions[key]}`);
+
+  return parts.length ? parts.join(", ") : "-";
+}
+
+function formatStageSpan(entity) {
+  return `${entity.stageList || "-"} (${entity.stageSpanCount})`;
+}
+
+function renderLongitudinalSupportTable(tableId, rows) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHtml(r.label)}</td>
+      <td>${escapeHtml(r.group || "")}</td>
+      <td>${r.visibleInstanceCount}</td>
+      <td>${r.uniqueNeighborCount}</td>
+      <td>${r.aggregatedDegree}</td>
+      <td>${r.aggregatedColoSupport}</td>
+      <td>${r.aggregatedTemporalSupport}</td>
+      <td>${escapeHtml(formatStageSpan(r))}</td>
+      <td>${escapeHtml(formatTemporalTransitions(r.temporalTransitions))}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderLongitudinalSupportAnalysis(nodes, links) {
+  const wrap = document.getElementById("hub-analysis-wrap");
+  if (!wrap) return;
+
+  // graph1 only
+  if (!currentGraphKey.includes("graph1")) {
+    wrap.classList.add("d-none");
+    currentHubExportRows = [];
+    return;
+  }
+
+  wrap.classList.remove("d-none");
+
+  const metrics = computeLongitudinalSupportGraph1(nodes, links);
+
+  const topMge = getTopLongitudinalEntities(metrics, false, 5);
+  const topArg = getTopLongitudinalEntities(metrics, true, 5);
+
+  renderLongitudinalSupportTable("mge-hub-table", topMge);
+  renderLongitudinalSupportTable("arg-hub-table", topArg);
+
+  currentHubExportRows = [
+    ...topMge.map(r => ({
+      EntityType: "MGE",
+      Label: r.label,
+      Group: r.group || "",
+      VisibleInstances: r.visibleInstanceCount,
+      UniqueNeighbors: r.uniqueNeighborCount,
+      AggregatedDegree: r.aggregatedDegree,
+      AggregatedColocalizationSupport: r.aggregatedColoSupport,
+      AggregatedTemporalSupport: r.aggregatedTemporalSupport,
+      StageSpan: formatStageSpan(r),
+      TemporalTransitions: formatTemporalTransitions(r.temporalTransitions),
+      ExactTimepoints: r.exactTimepointList
+    })),
+    ...topArg.map(r => ({
+      EntityType: "ARG",
+      Label: r.label,
+      Group: r.group || "",
+      VisibleInstances: r.visibleInstanceCount,
+      UniqueNeighbors: r.uniqueNeighborCount,
+      AggregatedDegree: r.aggregatedDegree,
+      AggregatedColocalizationSupport: r.aggregatedColoSupport,
+      AggregatedTemporalSupport: r.aggregatedTemporalSupport,
+      StageSpan: formatStageSpan(r),
+      TemporalTransitions: formatTemporalTransitions(r.temporalTransitions),
+      ExactTimepoints: r.exactTimepointList
+    }))
+  ];
+}
+
+
+function downloadHubAnalysisCsv() {
+  if (!currentHubExportRows.length) return;
+
+  const headers = [
+    "EntityType",
+    "Label",
+    "Group",
+    "VisibleInstances",
+    "UniqueNeighbors",
+    "AggregatedDegree",
+    "AggregatedColocalizationSupport",
+    "AggregatedTemporalSupport",
+    "StageSpan",
+    "TemporalTransitions",
+    "ExactTimepoints"
+  ];
+
+  const rows = [headers];
+
+  currentHubExportRows.forEach(row => {
+    rows.push(headers.map(h => row[h] ?? ""));
+  });
+
+  const csvContent = rows
+    .map(row =>
+      row
+        .map(value => {
+          const s = String(value ?? "");
+          return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        })
+        .join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const fileBase = String(currentGraphKey || "graph").replace(/^.*[\\/]/, "").replace(".json", "");
+  a.href = url;
+  a.download = `${fileBase}_longitudinal_support.csv`;
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+// --------------------------------------------
+
+
 // --- FLOATING ACTION BUTTON POSITIONING TO BOTTOM---
 function positionFab() {
   if (!fab || !graphBox) return;
@@ -1708,6 +2022,7 @@ document.getElementById("downloadDataBtn").addEventListener("click", downloadCur
 document.getElementById("argSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 document.getElementById("mgeSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 document.getElementById("closeNodeDetails")?.addEventListener("click", hideNodeDetails);
+document.getElementById("downloadHubCsvBtn")?.addEventListener("click", downloadHubAnalysisCsv);
 
 // Update on scroll + resize + initial load
 window.addEventListener("scroll", positionFab, { passive: true });
