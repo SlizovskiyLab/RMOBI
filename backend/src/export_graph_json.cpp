@@ -455,6 +455,11 @@ void exportColocalizationsToJSONByDisease(
 ) {
     std::map<std::string, std::map<std::string, std::map<std::string, int>>> diseaseColocCounts;
 
+    // Store metadata for each pair so we can export it later
+    std::map<std::string, std::string> pairToArgResistanceGroup;
+    std::map<std::string, std::string> pairToArgResistance;
+    std::map<std::string, std::string> pairToMgeGroup;
+
     // Build counts by disease → colocalization → status
     for (const auto& [tuple, tps] : colocalizationByIndividual) {
         const int patientID = std::get<0>(tuple);
@@ -476,6 +481,10 @@ void exportColocalizationsToJSONByDisease(
 
         std::string pairName = getARGName(argID) + "–" + getMGEName(mgeID);
         diseaseColocCounts[disease][pairName][status]++;
+        // Record metadata once per pair
+        pairToArgResistanceGroup[pairName] = getARGGroupName(argID);
+        pairToArgResistance[pairName] = getARGResistance(argID);
+        pairToMgeGroup[pairName] = getMGEGroupName(mgeID);
     }
 
     // Build JSON structure
@@ -488,6 +497,9 @@ void exportColocalizationsToJSONByDisease(
             for (const auto& [status, count] : statusMap) {
                 diseaseArray.push_back({
                     {"colocalization", pair},
+                    {"argResistance", pairToArgResistanceGroup[pair]},
+                    {"argResistanceMap", pairToArgResistance[pair]},
+                    {"mgeGroup", pairToMgeGroup[pair]},
                     {"status", status},
                     {"patients", count}
                 });

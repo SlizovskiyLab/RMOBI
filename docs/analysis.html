@@ -57,12 +57,22 @@
         <option value="disappeared">Disappeared</option>
         <option value="transferred">Transferred</option>
       </select>
+      <select id="argResistanceGroupSelect" class="form-select form-select-sm" style="min-width: 240px;">
+        <option value="all" selected>All ARG resistance groups</option>
+      </select>
+      <select id="mgeGroupSelect" class="form-select form-select-sm" style="min-width: 210px;">
+        <option value="all" selected>All MGE groups</option>
+      </select>
         <div class="btn-group btn-group-sm" role="group" aria-label="pagination">
           <button id="prevBtn" class="btn btn-outline-secondary">◀</button>
           <button id="nextBtn" class="btn btn-outline-secondary">▶</button>
         </div>
           <!-- <button id="downloadPdfBtn" class="btn btn-sm btn-secondary">Download PDF </button> -->
-          <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2"id="downloadPdfBtn">
+          <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadSvgBtn">
+          <svg class="rmobi-icon" aria-hidden="true"><use href="assets/icons/download.svg#i-download" xlink:href="assets/icons/download.svg#i-download"></use></svg>
+          SVG
+          </button>
+          <button type="button" class="btn btn-outline-dark d-flex align-items-center gap-2" id="downloadPdfBtn">
           <svg class="rmobi-icon" aria-hidden="true"><use href="assets/icons/download.svg#i-download" xlink:href="assets/icons/download.svg#i-download"></use></svg>
           PDF
           </button>
@@ -141,8 +151,66 @@ let sorted = [];
 let totalPages = 1;
 let yDomainMax = 5;
 
-function preprocessDisease(disease, activeKeys) {
-  const data = RAW[disease].map(d => ({
+function getArgResistanceGroupValue(row) {
+  return (row.argResistanceGroup || row.argResistance || "").trim();
+}
+
+function getAnalysisFilters() {
+  return {
+    argResistanceGroup: d3.select("#argResistanceGroupSelect").property("value"),
+    mgeGroup: d3.select("#mgeGroupSelect").property("value")
+  };
+}
+
+function populateGroupFiltersForDisease(disease) {
+  const rows = RAW?.[disease] || [];
+
+  const argSelect = d3.select("#argResistanceGroupSelect");
+  const mgeSelect = d3.select("#mgeGroupSelect");
+
+  const previousArg = argSelect.property("value") || "all";
+  const previousMge = mgeSelect.property("value") || "all";
+
+  const argGroups = [...new Set(rows.map(getArgResistanceGroupValue).filter(Boolean))].sort(d3.ascending);
+  const mgeGroups = [...new Set(rows.map(d => (d.mgeGroup || "").trim()).filter(Boolean))].sort(d3.ascending);
+
+  const argOptions = [{ value: "all", text: "All ARG resistance groups" }].concat(
+    argGroups.map(v => ({ value: v, text: v }))
+  );
+  const mgeOptions = [{ value: "all", text: "All MGE groups" }].concat(
+    mgeGroups.map(v => ({ value: v, text: v }))
+  );
+
+  argSelect.selectAll("option")
+    .data(argOptions)
+    .join("option")
+    .attr("value", d => d.value)
+    .text(d => d.text);
+
+  mgeSelect.selectAll("option")
+    .data(mgeOptions)
+    .join("option")
+    .attr("value", d => d.value)
+    .text(d => d.text);
+
+  argSelect.property("value", argOptions.some(o => o.value === previousArg) ? previousArg : "all");
+  mgeSelect.property("value", mgeOptions.some(o => o.value === previousMge) ? previousMge : "all");
+}
+
+function preprocessDisease(disease, activeKeys, filters) {
+  const data = RAW[disease]
+    .filter(d => {
+      const argGroup = getArgResistanceGroupValue(d);
+      const mgeGroup = (d.mgeGroup || "").trim();
+
+      const argGroupFilterOk =
+        filters.argResistanceGroup === "all" || argGroup === filters.argResistanceGroup;
+      const mgeGroupFilterOk =
+        filters.mgeGroup === "all" || mgeGroup === filters.mgeGroup;
+
+      return argGroupFilterOk && mgeGroupFilterOk;
+    })
+    .map(d => ({
     colocalization: d.colocalization,
     status: (d.status || "").toLowerCase(),
     patients: +d.patients || 0
@@ -372,9 +440,17 @@ segmentLabels.selectAll("text")
 function setDisease(disease) {
   currentDisease = disease;
   currentPage = 0;
+  populateGroupFiltersForDisease(disease);
+
+  renderCurrentView();
+}
+
+function renderCurrentView() {
+  if (!currentDisease) return;
 
   const activeKeys = getActiveKeys();
-  const { sortedLocal, yMax } = preprocessDisease(disease, activeKeys);
+  const filters = getAnalysisFilters();
+  const { sortedLocal, yMax } = preprocessDisease(currentDisease, activeKeys, filters);
 
   sorted = sortedLocal;
   yDomainMax = yMax;
@@ -390,16 +466,17 @@ function setDisease(disease) {
 d3.select("#statusSelect").on("change", function () {
   activeStatus = this.value;
   currentPage = 0;
+  renderCurrentView();
+});
 
-  const activeKeys = getActiveKeys();
-  const { sortedLocal, yMax } = preprocessDisease(currentDisease, activeKeys);
+d3.select("#argResistanceGroupSelect").on("change", function () {
+  currentPage = 0;
+  renderCurrentView();
+});
 
-  sorted = sortedLocal;
-  yDomainMax = yMax;
-  totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-
-  drawLegendBox();
-  drawPage();
+d3.select("#mgeGroupSelect").on("change", function () {
+  currentPage = 0;
+  renderCurrentView();
 });
 
 
@@ -517,6 +594,53 @@ async function downloadAreaAsPDF(areaId, fileNameBase) {
   pdf.save(fileNameBase + ".pdf");
 }
 
+function downloadChartAsSVG() {
+  const svgEl = document.querySelector("#chartSvg");
+  if (!svgEl) {
+    console.error("Missing #chartSvg");
+    return;
+  }
+
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+  const rect = svgEl.getBoundingClientRect();
+  const outW = Math.max(1, Math.round(rect.width));
+  const outH = Math.max(1, Math.round(rect.height));
+
+  clone.setAttribute("width", outW);
+  clone.setAttribute("height", outH);
+  if (!clone.getAttribute("viewBox")) {
+    clone.setAttribute("viewBox", `0 0 ${outW} ${outH}`);
+  }
+
+  const cssStyles = Array.from(document.styleSheets)
+    .map(ss => {
+      try { return Array.from(ss.cssRules).map(r => r.cssText).join("\n"); }
+      catch (e) { return ""; }
+    })
+    .join("\n");
+
+  const styleEl = document.createElement("style");
+  styleEl.textContent = cssStyles;
+  clone.insertBefore(styleEl, clone.firstChild);
+
+  const svgString = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const disease = (currentDisease || "chart").replace(/\s+/g, "_");
+  const page = (typeof currentPage === "number" ? currentPage + 1 : 1);
+  a.href = url;
+  a.download = `RMOBI_${disease}_page${page}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 //-------------------------------------------------------------------------------------------------------//
 
 function showTip(html, event) {
@@ -537,6 +661,9 @@ function hideTip() {
 
 //---------------------------------------------------------------//
 
+
+document.getElementById("downloadSvgBtn")
+  ?.addEventListener("click", downloadChartAsSVG);
 
 document.getElementById("downloadPdfBtn")
   ?.addEventListener("click", () => {

@@ -5,6 +5,7 @@
 ENRICHMENT FUNCTIONS
 */
 
+let currentHubTopCount = 5;
 function getTimepointCategory(timepoint) {
   const t = Number(timepoint);
   if (t === 1000) return "donor";
@@ -207,6 +208,14 @@ document.getElementById("zoom-out")?.addEventListener("click", () => {
 let originalData = {}; 
 let currentGraphKey = "json/graph1.json"; 
 
+const ARG_GROUP_DROPDOWN_MAX_LABEL_LENGTH = 22;
+
+function truncateWithTwoDots(text, maxLength = ARG_GROUP_DROPDOWN_MAX_LABEL_LENGTH) {
+  const normalized = (text || "").trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 2))}..`;
+}
+
 const shapeMap = { circle: d3.symbolCircle, box: d3.symbolCircle, triangle: d3.symbolTriangle, diamond: d3.symbolDiamond, hexagon: d3.symbolCross, octagon: d3.symbolStar, parallelogram: d3.symbolWye, trapezium: d3.symbolSquare,  };
 
 // --- DATA LOADING & INITIALIZATION ---
@@ -236,17 +245,51 @@ function loadAndRenderGraph(fileKey) {
 
 // --- POPULATE FILTER DROPDOWNS ---
 function populateFilters(data) {
-    const menu = document.querySelector("#mgeGroupMenu");
-    menu.innerHTML = `
+  const mgeMenu = document.querySelector("#mgeGroupMenu");
+  const argResistanceMenu = document.querySelector("#argResistanceGroupMenu");
+
+  mgeMenu.innerHTML = `
         <li><a class="dropdown-item active" data-value="all">All Groups</a></li>
     `;
+
+  if (argResistanceMenu) {
+    argResistanceMenu.innerHTML = `
+      <li><a class="dropdown-item active" data-value="all">All ARG Groups</a></li>
+    `;
+  }
+
     const nodeSource = currentGraphKey.includes("graph1")
         ? data.nodes.filter(n => !n.isARG)
         : data.nodes;
+
     const groups = [...new Set(nodeSource.map(n => n.mgeGroup).filter(Boolean))].sort();
     groups.forEach(g => {
-        menu.innerHTML += `<li><a class="dropdown-item" data-value="${g}">${g}</a></li>`;
+    mgeMenu.innerHTML += `<li><a class="dropdown-item" data-value="${g}">${g}</a></li>`;
     });
+
+  if (argResistanceMenu) {
+    const argNodes = currentGraphKey.includes("graph1")
+      ? data.nodes.filter(n => n.isARG)
+      : data.nodes;
+    const argResistanceGroups = [
+      ...new Set(
+        argNodes
+          .map(n => {
+            if (currentGraphKey.includes("graph2")) {
+              return (n.argGroup || "").trim();
+            }
+            return (n.argResistanceGroup || n.argResistance || "").trim();
+          })
+          .filter(Boolean)
+      )
+    ].sort();
+
+    argResistanceGroups.forEach(group => {
+      const displayGroup = truncateWithTwoDots(group);
+      argResistanceMenu.innerHTML += `<li><a class="dropdown-item" data-value="${group}" title="${group}">${displayGroup}</a></li>`;
+    });
+  }
+
     bindCustomDropdownHandlers();
 
 }
@@ -284,12 +327,14 @@ function bindCustomDropdownHandlers() {
 function resetFilters(redraw = true) {
     // hidden values used by D3
     d3.select("#diseaseFilter").property("value", "all");
+  d3.select("#argResistanceGroupFilter").property("value", "all");
     d3.select("#mgeGroupFilter").property("value", "all");
     d3.select("#argSearch").property("value", "");
     d3.select("#mgeSearch").property("value", "");
     d3.selectAll(".timepoint-checkbox").property("checked", true);
 
     resetSingleDropdown("#diseaseFilter", "All Diseases");
+  resetSingleDropdown("#argResistanceGroupFilter", "All ARG Groups");
     resetSingleDropdown("#mgeGroupFilter", "All Groups");
     updateTimepointButtonText();
 
@@ -327,6 +372,7 @@ function applyFiltersAndDraw() {
 
     const filters = {
         disease: d3.select("#diseaseFilter").property("value"),
+      argResistanceGroup: d3.select("#argResistanceGroupFilter").property("value"),
         mgeGroup: d3.select("#mgeGroupFilter").property("value"),
         timepoints: Array.from(d3.selectAll(".timepoint-checkbox").nodes())
             .filter(cb => cb.checked)
@@ -345,14 +391,20 @@ function applyFiltersAndDraw() {
     if (currentGraphKey.includes("graph1")) {
         workingLinks = workingLinks
             .filter(l => {
-                if (!l.isColo) return true; // keep temporal links
+          if (!l.isColo) {
+            if (filters.disease === "all") return true;
+            return getTemporalPatientCount(l, filters.disease) > 0;
+          }
                 if (filters.disease === "all") return true;
 
                 const dc = l.diseaseCounts || {};
                 return (Number(dc[filters.disease]) || 0) > 0;
             })
             .map(l => {
-                if (!l.isColo) return l;
+          if (!l.isColo) {
+            l.patientCount = getTemporalPatientCount(l, filters.disease);
+            return l;
+          }
 
                 const dc = l.diseaseCounts || {};
                 l.patientCount =
@@ -362,6 +414,19 @@ function applyFiltersAndDraw() {
 
                 return l;
             });
+    } else {
+      workingLinks = workingLinks
+        .map(l => {
+          if (!l.isColo) {
+            l.patientCount = getTemporalPatientCount(l, filters.disease);
+          }
+          return l;
+        })
+        .filter(l => {
+          if (l.isColo) return true;
+          if (filters.disease === "all") return true;
+          return (Number(l.patientCount) || 0) > 0;
+        });
     }
 
     // -------------------------------------------------
@@ -504,6 +569,14 @@ function getMatchedArgIds(nodes, filters, availableNodeIds) {
         if (!n.isARG) return;
 
         const label = (n.label || "").toLowerCase();
+        const argResistanceGroup = currentGraphKey.includes("graph2")
+            ? (n.argGroup || "").trim()
+            : (n.argResistanceGroup || n.argResistance || "").trim();
+
+        const groupOk =
+            filters.argResistanceGroup === "all" || argResistanceGroup === filters.argResistanceGroup;
+
+        if (!groupOk) return;
 
         if (!filters.argSearchTerm || label.includes(filters.argSearchTerm)) {
             matched.add(n.id);
@@ -537,7 +610,7 @@ function getMatchedMgeIds(nodes, filters, availableNodeIds) {
 }
 
 function getVisibleNodeIdsFromArgMgeFilters(nodes, links, filters, availableNodeIds) {
-    const hasArgFilter = !!filters.argSearchTerm;
+  const hasArgFilter = filters.argResistanceGroup !== "all" || !!filters.argSearchTerm;
     const hasMgeFilter = filters.mgeGroup !== "all" || !!filters.mgeSearchTerm;
 
     // no ARG/MGE-specific filters → just keep everything already available
@@ -607,13 +680,17 @@ function getVisibleNodeIdsForGraph2(nodes, filters, availableNodeIds) {
         const argOk =
             !filters.argSearchTerm || argLabel.includes(filters.argSearchTerm);
 
+        const argGroupValue = (n.argGroup || "").trim();
+        const argGroupOk =
+            filters.argResistanceGroup === "all" || argGroupValue === filters.argResistanceGroup;
+
         const mgeSearchOk =
             !filters.mgeSearchTerm || mgeLabel.includes(filters.mgeSearchTerm);
 
         const mgeGroupOk =
             filters.mgeGroup === "all" || n.mgeGroup === filters.mgeGroup;
 
-        if (argOk && mgeSearchOk && mgeGroupOk) {
+        if (argOk && argGroupOk && mgeSearchOk && mgeGroupOk) {
             visibleIds.add(n.id);
         }
     });
@@ -791,7 +868,7 @@ function updateVisualization(data) {
             .type(d => shapeMap[d.shape] || d3.symbolCircle)
             .size(d => {
                 if (!currentGraphKey.includes("graph2") || d.__disableScaling) {
-                    return 200;
+                    return 300;
                 }
                 const count = (typeof d.patientCount === "number") ? d.patientCount : 0;
 
@@ -811,7 +888,7 @@ function updateVisualization(data) {
         )
         .attr("fill", d => d.color)
         .attr("stroke", d => "#999")
-        .attr("stroke-width", 0.5)
+        .attr("stroke-width", 1.5)
         .style("cursor", "pointer")
         .on("click", function(event, d) {
             event.stopPropagation();
@@ -1629,6 +1706,18 @@ function getEdgeSupport(link) {
   return Number(link.patientCount ?? link.individualCount ?? 1);
 }
 
+function getTemporalPatientCount(link, activeDisease) {
+  const dc = link?.diseaseCounts;
+  if (dc && typeof dc === "object") {
+    if (activeDisease && activeDisease !== "all") {
+      return Number(dc[activeDisease]) || 0;
+    }
+    return Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0);
+  }
+
+  return Number(link?.patientCount ?? link?.individualCount ?? 0);
+}
+
 function getNodeKeyForAggregation(node) {
   // graph1 only
   return node.label || node.id;
@@ -1636,6 +1725,27 @@ function getNodeKeyForAggregation(node) {
 
 function createEmptyTemporalTransitionCounter() {
   return {};
+}
+
+function createEmptyTemporalStageBucketCounter() {
+  return {
+    donorToPre: 0,
+    donorToPost: 0,
+    preToAny: 0,
+    postToPost: 0
+  };
+}
+
+function isPostStage(stage) {
+  return stage === "post1" || stage === "post2" || stage === "post3";
+}
+
+function getTemporalStageBucket(sourceStage, targetStage) {
+  if (sourceStage === "donor" && targetStage === "pre") return "donorToPre";
+  if (sourceStage === "donor" && isPostStage(targetStage)) return "donorToPost";
+  if (sourceStage === "pre" && isPostStage(targetStage)) return "preToAny";
+  if (isPostStage(sourceStage) && isPostStage(targetStage)) return "postToPost";
+  return null;
 }
 
 function createEmptyEntityMetric(label, isARG, groupValue = "") {
@@ -1660,15 +1770,16 @@ function createEmptyEntityMetric(label, isARG, groupValue = "") {
     aggregatedTemporalDegree: 0,
 
     // aggregated weighted support
-    aggregatedColoSupport: 0,
-    aggregatedTemporalSupport: 0,
+    // aggregatedColoSupport: 0,
+    // aggregatedTemporalSupport: 0,
 
     // temporal stage exposure
-    temporalTransitions: createEmptyTemporalTransitionCounter()
+    temporalTransitions: createEmptyTemporalTransitionCounter(),
+    temporalStageBuckets: createEmptyTemporalStageBucketCounter()
   };
 }
 
-function computeLongitudinalSupportGraph1(nodes, links) {
+function computeLongitudinalSupportGraph1(nodes, links, activeDisease = "all") {
   const nodeById = new Map(nodes.map(n => [n.id, n]));
   const entityMap = new Map();
 
@@ -1708,35 +1819,38 @@ function computeLongitudinalSupportGraph1(nodes, links) {
 
     const sourceEntity = getOrCreateEntity(sourceNode);
     const targetEntity = getOrCreateEntity(targetNode);
+    const sameEntity = sourceEntity === targetEntity;
 
-    const weight = getEdgeSupport(link);
+    // const weight = getEdgeSupport(link);
 
     // aggregated degree counts every visible edge touching this entity
     sourceEntity.aggregatedDegree += 1;
-    targetEntity.aggregatedDegree += 1;
+    if (!sameEntity) targetEntity.aggregatedDegree += 1;
 
     // unique neighbors aggregated at entity level
     sourceEntity.uniqueNeighborLabels.add(targetEntity.label);
-    targetEntity.uniqueNeighborLabels.add(sourceEntity.label);
+    if (!sameEntity) targetEntity.uniqueNeighborLabels.add(sourceEntity.label);
 
     if (link.isColo) {
       sourceEntity.aggregatedColoDegree += 1;
-      targetEntity.aggregatedColoDegree += 1;
+      if (!sameEntity) targetEntity.aggregatedColoDegree += 1;
 
-      sourceEntity.aggregatedColoSupport += weight;
-      targetEntity.aggregatedColoSupport += weight;
+      // sourceEntity.aggregatedColoSupport += weight;
+      // targetEntity.aggregatedColoSupport += weight;
 
       sourceEntity.uniqueColoNeighborLabels.add(targetEntity.label);
-      targetEntity.uniqueColoNeighborLabels.add(sourceEntity.label);
+      if (!sameEntity) targetEntity.uniqueColoNeighborLabels.add(sourceEntity.label);
     } else {
-      sourceEntity.aggregatedTemporalDegree += 1;
-      targetEntity.aggregatedTemporalDegree += 1;
+      const temporalPatientCount = getTemporalPatientCount(link, activeDisease);
 
-      sourceEntity.aggregatedTemporalSupport += weight;
-      targetEntity.aggregatedTemporalSupport += weight;
+      sourceEntity.aggregatedTemporalDegree += 1;
+      if (!sameEntity) targetEntity.aggregatedTemporalDegree += 1;
+
+      // sourceEntity.aggregatedTemporalSupport += weight;
+      // targetEntity.aggregatedTemporalSupport += weight;
 
       sourceEntity.uniqueTemporalNeighborLabels.add(targetEntity.label);
-      targetEntity.uniqueTemporalNeighborLabels.add(sourceEntity.label);
+      if (!sameEntity) targetEntity.uniqueTemporalNeighborLabels.add(sourceEntity.label);
 
       const sourceStage = getTimepointCategory(sourceNode.timepoint);
       const targetStage = getTimepointCategory(targetNode.timepoint);
@@ -1748,8 +1862,16 @@ function computeLongitudinalSupportGraph1(nodes, links) {
       sourceEntity.temporalTransitions[forwardKey] =
         (sourceEntity.temporalTransitions[forwardKey] || 0) + 1;
 
-      targetEntity.temporalTransitions[forwardKey] =
-        (targetEntity.temporalTransitions[forwardKey] || 0) + 1;
+      if (!sameEntity) {
+        targetEntity.temporalTransitions[forwardKey] =
+          (targetEntity.temporalTransitions[forwardKey] || 0) + 1;
+      }
+
+      const bucket = getTemporalStageBucket(sourceStage, targetStage);
+      if (bucket) {
+        sourceEntity.temporalStageBuckets[bucket] += temporalPatientCount;
+        if (!sameEntity) targetEntity.temporalStageBuckets[bucket] += temporalPatientCount;
+      }
       }
   });
 
@@ -1770,8 +1892,16 @@ function getTopLongitudinalEntities(metrics, wantARG, topK = 5) {
   return metrics
     .filter(m => wantARG ? m.isARG : !m.isARG)
     .sort((a, b) => {
-      const aScore = a.aggregatedColoSupport + a.aggregatedTemporalSupport;
-      const bScore = b.aggregatedColoSupport + b.aggregatedTemporalSupport;
+      const aScore =
+        (a.temporalStageBuckets?.donorToPre || 0) +
+        (a.temporalStageBuckets?.donorToPost || 0) +
+        (a.temporalStageBuckets?.preToAny || 0) +
+        (a.temporalStageBuckets?.postToPost || 0);
+      const bScore =
+        (b.temporalStageBuckets?.donorToPre || 0) +
+        (b.temporalStageBuckets?.donorToPost || 0) +
+        (b.temporalStageBuckets?.preToAny || 0) +
+        (b.temporalStageBuckets?.postToPost || 0);
 
       if (bScore !== aScore) return bScore - aScore;
       if (b.uniqueNeighborCount !== a.uniqueNeighborCount) return b.uniqueNeighborCount - a.uniqueNeighborCount;
@@ -1806,6 +1936,189 @@ function formatStageSpan(entity) {
   return `${entity.stageList || "-"} (${entity.stageSpanCount})`;
 }
 
+function setHubTableHeaders(tableId, headers) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const theadRow = table.querySelector("thead tr");
+  if (!theadRow) return;
+  theadRow.innerHTML = headers.map(h => `<th>${escapeHtml(h)}</th>`).join("");
+}
+
+function applyGraph1HubHeaders() {
+  setHubTableHeaders("mge-hub-table", [
+    "MGE",
+    "Class",
+    "Node Instances",
+    "Unique Neighbors",
+    "Agg Node Degree",
+    "Stage Span",
+    "Donor -> Pre",
+    "Donor -> Post",
+    "Pre -> Post",
+    "Post -> Post"
+  ]);
+
+  setHubTableHeaders("arg-hub-table", [
+    "ARG",
+    "Resistance Group",
+    "Node Instances",
+    "Unique Neighbors",
+    "Agg Node Degree",
+    "Stage Span",
+    "Donor -> Pre",
+    "Donor -> Post",
+    "Pre -> Post",
+    "Post -> Post"
+  ]);
+}
+
+function applyGraph2HubHeaders() {
+  setHubTableHeaders("mge-hub-table", [
+    "Colocalization",
+    "MGE Class",
+    "ARG Resistance Group",
+    "Node Instances",
+    "Neighbors",
+    "Node Degree",
+    "Stage Span",
+    "Donor -> Pre",
+    "Donor -> Post",
+    "Pre -> Post",
+    "Post -> Post"
+  ]);
+}
+
+function renderProminentColocalizationTable(tableId, rows) {
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHtml(r.label)}</td>
+      <td>${escapeHtml(r.mgeClass || "")}</td>
+      <td>${escapeHtml(r.argResistanceGroup || "")}</td>
+      <td>${r.visibleInstanceCount}</td>
+      <td>${r.uniqueNeighborCount}</td>
+      <td>${r.aggregatedDegree}</td>
+      <td>${escapeHtml(formatStageSpan(r))}</td>
+      <td>${r.temporalStageBuckets?.donorToPre || 0}</td>
+      <td>${r.temporalStageBuckets?.donorToPost || 0}</td>
+      <td>${r.temporalStageBuckets?.preToAny || 0}</td>
+      <td>${r.temporalStageBuckets?.postToPost || 0}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function computeProminentColocalizationsGraph2(nodes, links, activeDisease = "all") {
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+  const entityMap = new Map();
+
+  function getColocKey(node) {
+    const label = node.label || node.id;
+    const mgeClass = node.mgeGroup || "";
+    const argResistanceGroup = node.argGroup || node.argResistance || "";
+    return `${label}::${mgeClass}::${argResistanceGroup}`;
+  }
+
+  function getOrCreateEntity(node) {
+    const key = getColocKey(node);
+    if (!entityMap.has(key)) {
+      const metric = createEmptyEntityMetric(node.label || node.id, false, node.mgeGroup || "");
+      metric.mgeClass = node.mgeGroup || "";
+      metric.argResistanceGroup = node.argGroup || node.argResistance || "";
+      entityMap.set(key, metric);
+    }
+    return entityMap.get(key);
+  }
+
+  nodes.forEach(node => {
+    const entity = getOrCreateEntity(node);
+    entity.visibleInstanceCount += 1;
+    entity.exactTimepoints.add(Number(node.timepoint));
+    entity.stageCategories.add(getTimepointCategory(node.timepoint));
+  });
+
+  links.forEach(link => {
+    const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+    const targetId = typeof link.target === "object" ? link.target.id : link.target;
+    const sourceNode = nodeById.get(sourceId);
+    const targetNode = nodeById.get(targetId);
+    if (!sourceNode || !targetNode) return;
+
+    const sourceEntity = getOrCreateEntity(sourceNode);
+    const targetEntity = getOrCreateEntity(targetNode);
+    const sameEntity = sourceEntity === targetEntity;
+
+    sourceEntity.aggregatedDegree += 1;
+    if (!sameEntity) targetEntity.aggregatedDegree += 1;
+
+    const sourceKey = getColocKey(sourceNode);
+    const targetKey = getColocKey(targetNode);
+
+    if (sourceKey !== targetKey) {
+      sourceEntity.uniqueNeighborLabels.add(targetEntity.label);
+      targetEntity.uniqueNeighborLabels.add(sourceEntity.label);
+    }
+
+    if (!link.isColo) {
+      const temporalPatientCount = getTemporalPatientCount(link, activeDisease);
+      const sourceStage = getTimepointCategory(sourceNode.timepoint);
+      const targetStage = getTimepointCategory(targetNode.timepoint);
+
+      const forwardKey = `${sourceStage}->${targetStage}`;
+      sourceEntity.temporalTransitions[forwardKey] =
+        (sourceEntity.temporalTransitions[forwardKey] || 0) + 1;
+      if (!sameEntity) {
+        targetEntity.temporalTransitions[forwardKey] =
+          (targetEntity.temporalTransitions[forwardKey] || 0) + 1;
+      }
+
+      const bucket = getTemporalStageBucket(sourceStage, targetStage);
+      if (bucket) {
+        sourceEntity.temporalStageBuckets[bucket] += temporalPatientCount;
+        if (!sameEntity) targetEntity.temporalStageBuckets[bucket] += temporalPatientCount;
+      }
+    }
+  });
+
+  return [...entityMap.values()].map(entity => ({
+    ...entity,
+    uniqueNeighborCount: entity.uniqueNeighborLabels.size,
+    stageSpanCount: entity.stageCategories.size,
+    exactTimepointCount: entity.exactTimepoints.size,
+    exactTimepointList: [...entity.exactTimepoints].sort((a, b) => a - b).join(", "),
+    stageList: [...entity.stageCategories].join(", ")
+  }));
+}
+
+function getTopProminentColocalizations(metrics, topK = 5) {
+  return metrics
+    .sort((a, b) => {
+      const aScore =
+        (a.temporalStageBuckets?.donorToPre || 0) +
+        (a.temporalStageBuckets?.donorToPost || 0) +
+        (a.temporalStageBuckets?.preToAny || 0) +
+        (a.temporalStageBuckets?.postToPost || 0);
+      const bScore =
+        (b.temporalStageBuckets?.donorToPre || 0) +
+        (b.temporalStageBuckets?.donorToPost || 0) +
+        (b.temporalStageBuckets?.preToAny || 0) +
+        (b.temporalStageBuckets?.postToPost || 0);
+
+      if (bScore !== aScore) return bScore - aScore;
+      if (b.aggregatedDegree !== a.aggregatedDegree) return b.aggregatedDegree - a.aggregatedDegree;
+      if (b.uniqueNeighborCount !== a.uniqueNeighborCount) return b.uniqueNeighborCount - a.uniqueNeighborCount;
+      return a.label.localeCompare(b.label);
+    })
+    .slice(0, topK);
+}
+
 function renderLongitudinalSupportTable(tableId, rows) {
   const tbody = document.querySelector(`#${tableId} tbody`);
   if (!tbody) return;
@@ -1821,10 +2134,11 @@ function renderLongitudinalSupportTable(tableId, rows) {
       <td>${r.visibleInstanceCount}</td>
       <td>${r.uniqueNeighborCount}</td>
       <td>${r.aggregatedDegree}</td>
-      <td>${r.aggregatedColoSupport}</td>
-      <td>${r.aggregatedTemporalSupport}</td>
       <td>${escapeHtml(formatStageSpan(r))}</td>
-      <td>${escapeHtml(formatTemporalTransitions(r.temporalTransitions))}</td>
+      <td>${r.temporalStageBuckets?.donorToPre || 0}</td>
+      <td>${r.temporalStageBuckets?.donorToPost || 0}</td>
+      <td>${r.temporalStageBuckets?.preToAny || 0}</td>
+      <td>${r.temporalStageBuckets?.postToPost || 0}</td>
     `;
 
     tbody.appendChild(tr);
@@ -1834,9 +2148,10 @@ function renderLongitudinalSupportTable(tableId, rows) {
 function renderLongitudinalSupportAnalysis(nodes, links) {
   const wrap = document.getElementById("hub-analysis-wrap");
   if (!wrap) return;
+  const mgeSection = document.getElementById("mgeHubSection");
+  const argSection = document.getElementById("argHubSection");
 
-  // graph1 only
-  if (!currentGraphKey.includes("graph1")) {
+  if (!currentGraphKey.includes("graph1") && !currentGraphKey.includes("graph2")) {
     wrap.classList.add("d-none");
     currentHubExportRows = [];
     return;
@@ -1844,61 +2159,126 @@ function renderLongitudinalSupportAnalysis(nodes, links) {
 
   wrap.classList.remove("d-none");
 
-  const metrics = computeLongitudinalSupportGraph1(nodes, links);
+  const topCount = Math.max(1, Number(currentHubTopCount) || 5);
+  const activeDisease = d3.select("#diseaseFilter")?.property("value") || "all";
+  const topMgeTitle = document.getElementById("topMgeTitle");
+  const topArgTitle = document.getElementById("topArgTitle");
+  const isGraph1 = currentGraphKey.includes("graph1");
 
-  const topMge = getTopLongitudinalEntities(metrics, false, 5);
-  const topArg = getTopLongitudinalEntities(metrics, true, 5);
+  if (isGraph1) {
+    const metrics = computeLongitudinalSupportGraph1(nodes, links, activeDisease);
+    applyGraph1HubHeaders();
+    if (mgeSection) mgeSection.classList.remove("d-none");
+    if (argSection) argSection.classList.remove("d-none");
 
-  renderLongitudinalSupportTable("mge-hub-table", topMge);
-  renderLongitudinalSupportTable("arg-hub-table", topArg);
+    const topMge = getTopLongitudinalEntities(metrics, false, topCount);
+    const topArg = getTopLongitudinalEntities(metrics, true, topCount);
+    if (topMgeTitle) topMgeTitle.textContent = `Most Prominent ${topCount} MGE Entities`;
+    if (topArgTitle) topArgTitle.textContent = `Most Prominent ${topCount} ARG Entities`;
 
-  currentHubExportRows = [
-    ...topMge.map(r => ({
-      EntityType: "MGE",
-      Label: r.label,
-      Group: r.group || "",
-      VisibleInstances: r.visibleInstanceCount,
-      UniqueNeighbors: r.uniqueNeighborCount,
-      AggregatedDegree: r.aggregatedDegree,
-      AggregatedColocalizationSupport: r.aggregatedColoSupport,
-      AggregatedTemporalSupport: r.aggregatedTemporalSupport,
+    renderLongitudinalSupportTable("mge-hub-table", topMge);
+    renderLongitudinalSupportTable("arg-hub-table", topArg);
+
+    currentHubExportRows = [
+      ...topMge.map(r => ({
+        EntityType: "MGE",
+        Label: r.label,
+        Group: r.group || "",
+        VisibleInstances: r.visibleInstanceCount,
+        UniqueNeighbors: r.uniqueNeighborCount,
+        AggregatedDegree: r.aggregatedDegree,
+        StageSpan: formatStageSpan(r),
+        DonorToPre: r.temporalStageBuckets?.donorToPre || 0,
+        DonorToPost: r.temporalStageBuckets?.donorToPost || 0,
+        PreToAnyPhase: r.temporalStageBuckets?.preToAny || 0,
+        AnyPostToAnyPost: r.temporalStageBuckets?.postToPost || 0,
+        ExactTimepoints: r.exactTimepointList
+      })),
+      ...topArg.map(r => ({
+        EntityType: "ARG",
+        Label: r.label,
+        Group: r.group || "",
+        VisibleInstances: r.visibleInstanceCount,
+        UniqueNeighbors: r.uniqueNeighborCount,
+        AggregatedDegree: r.aggregatedDegree,
+        StageSpan: formatStageSpan(r),
+        DonorToPre: r.temporalStageBuckets?.donorToPre || 0,
+        DonorToPost: r.temporalStageBuckets?.donorToPost || 0,
+        PreToAnyPhase: r.temporalStageBuckets?.preToAny || 0,
+        AnyPostToAnyPost: r.temporalStageBuckets?.postToPost || 0,
+        ExactTimepoints: r.exactTimepointList
+      }))
+    ];
+  } else {
+    applyGraph2HubHeaders();
+    if (mgeSection) mgeSection.classList.remove("d-none");
+    if (argSection) argSection.classList.add("d-none");
+
+    const colocMetrics = computeProminentColocalizationsGraph2(nodes, links, activeDisease);
+    const topColoc = getTopProminentColocalizations(colocMetrics, topCount);
+
+    if (topMgeTitle) topMgeTitle.textContent = `Most Prominent ${topCount} Colocalizations`;
+    if (topArgTitle) topArgTitle.textContent = "";
+
+    renderProminentColocalizationTable("mge-hub-table", topColoc);
+    renderLongitudinalSupportTable("arg-hub-table", []);
+
+    currentHubExportRows = topColoc.map(r => ({
+      Colocalization: r.label,
+      MGEClass: r.mgeClass || "",
+      ARGResistanceGroup: r.argResistanceGroup || "",
+      NodeInstances: r.visibleInstanceCount,
+      Neighbors: r.uniqueNeighborCount,
+      NodeDegree: r.aggregatedDegree,
       StageSpan: formatStageSpan(r),
-      TemporalTransitions: formatTemporalTransitions(r.temporalTransitions),
+      DonorToPre: r.temporalStageBuckets?.donorToPre || 0,
+      DonorToPost: r.temporalStageBuckets?.donorToPost || 0,
+      PreToPost: r.temporalStageBuckets?.preToAny || 0,
+      PostToPost: r.temporalStageBuckets?.postToPost || 0,
       ExactTimepoints: r.exactTimepointList
-    })),
-    ...topArg.map(r => ({
-      EntityType: "ARG",
-      Label: r.label,
-      Group: r.group || "",
-      VisibleInstances: r.visibleInstanceCount,
-      UniqueNeighbors: r.uniqueNeighborCount,
-      AggregatedDegree: r.aggregatedDegree,
-      AggregatedColocalizationSupport: r.aggregatedColoSupport,
-      AggregatedTemporalSupport: r.aggregatedTemporalSupport,
-      StageSpan: formatStageSpan(r),
-      TemporalTransitions: formatTemporalTransitions(r.temporalTransitions),
-      ExactTimepoints: r.exactTimepointList
-    }))
-  ];
+    }));
+  }
+
+  document.querySelectorAll(".hub-grid-wrap").forEach(el => {
+    const table = el.querySelector("tbody");
+    const rowCount = table ? table.querySelectorAll("tr").length : 0;
+    el.classList.toggle("hub-grid-wrap-scroll", rowCount > 5);
+  });
 }
 
 
 function downloadHubAnalysisCsv() {
   if (!currentHubExportRows.length) return;
 
-  const headers = [
-    "EntityType",
-    "Label",
-    "Group",
-    "VisibleInstances",
-    "UniqueNeighbors",
-    "AggregatedDegree",
-    "AggregatedColocalizationSupport",
-    "AggregatedTemporalSupport",
-    "StageSpan",
-    "TemporalTransitions",
-    "ExactTimepoints"
-  ];
+  const headers = currentGraphKey.includes("graph2")
+    ? [
+        "Colocalization",
+        "MGEClass",
+        "ARGResistanceGroup",
+        "NodeInstances",
+        "Neighbors",
+        "NodeDegree",
+        "StageSpan",
+        "DonorToPre",
+        "DonorToPost",
+        "PreToPost",
+        "PostToPost",
+        "ExactTimepoints"
+      ]
+    : [
+        "EntityType",
+        "Label",
+        "Group",
+        "VisibleInstances",
+        "UniqueNeighbors",
+        "AggregatedDegree",
+        "StageSpan",
+        "DonorToPre",
+        "DonorToPost",
+        "PreToAnyPhase",
+        "AnyPostToAnyPost",
+        "ExactTimepoints"
+      ];
 
   const rows = [headers];
 
@@ -2006,6 +2386,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // --- EVENT LISTENERS ---
 d3.select("#dataset").on("change", function() { loadAndRenderGraph(this.value); });
 d3.select("#diseaseFilter").on("change", applyFiltersAndDraw);
+d3.select("#argResistanceGroupFilter").on("change", applyFiltersAndDraw);
 d3.select("#mgeGroupFilter").on("change", applyFiltersAndDraw);
 d3.select("#timepointFilter").on("change", applyFiltersAndDraw);
 d3.select("#searchBtn").on("click", applyFiltersAndDraw);
@@ -2022,6 +2403,31 @@ document.getElementById("downloadDataBtn").addEventListener("click", downloadCur
 document.getElementById("argSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 document.getElementById("mgeSearch")?.addEventListener("input", () => {populateSearchSuggestionsFromNodes(currentRenderedData?.nodes || []);});
 document.getElementById("closeNodeDetails")?.addEventListener("click", hideNodeDetails);
+document.getElementById("hubTopCount")?.addEventListener("change", function () {
+  currentHubTopCount = Number(this.value) || 5;
+  if (currentRenderedData?.nodes?.length) {
+    renderLongitudinalSupportAnalysis(currentRenderedData.nodes, currentRenderedData.links);
+  }
+});
+document.getElementById("viewHubGridsBtn")?.addEventListener("click", function () {
+  const collapseEl = document.getElementById("hub-analysis-collapse");
+  const wrapEl = document.getElementById("hub-analysis-wrap");
+  const firstGridTable = document.querySelector("#mge-hub-table");
+  if (!collapseEl || !wrapEl) return;
+
+  if (typeof bootstrap !== "undefined" && bootstrap.Collapse) {
+    bootstrap.Collapse.getOrCreateInstance(collapseEl).show();
+  } else {
+    collapseEl.classList.add("show");
+  }
+
+  wrapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  setTimeout(() => {
+    firstGridTable?.setAttribute("tabindex", "-1");
+    firstGridTable?.focus({ preventScroll: true });
+  }, 260);
+});
 document.getElementById("downloadHubCsvBtn")?.addEventListener("click", downloadHubAnalysisCsv);
 
 // Update on scroll + resize + initial load

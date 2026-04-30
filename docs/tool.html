@@ -51,7 +51,7 @@
                     <div class="row g-3">
                        <div class="fw-semibold">Graph Filters</div>
                         <!-- Graph View -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                         <label class="form-label"><strong>Graph View</strong>
                           <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Graph View"
                           data-bs-content="Choose the graph representation to display. ARG-MGE Interaction View shows interactions between ARGs and MGEs, while Colocalization View focuses on colocalization relationships.">
@@ -60,11 +60,11 @@
                         </label>
                         <div class="dropdown w-100" data-target-input="#dataset">
                             <button class="btn dropdown-btn w-100 text-start" type="button" data-bs-toggle="dropdown">
-                                ARG-MGE Interaction View
+                                ARG-MGE View
                             </button>
 
                             <ul class="dropdown-menu dropdown-select w-100">
-                                <li><a class="dropdown-item active" data-value="json/graph1.json">ARG-MGE Interaction View</a></li>
+                                <li><a class="dropdown-item active" data-value="json/graph1.json">ARG-MGE View</a></li>
                                 <li><a class="dropdown-item" data-value="json/graph2.json">Colocalization View</a></li>
                             </ul>
                         </div>
@@ -72,7 +72,7 @@
                     </div>
 
                         <!-- Disease -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label"><strong>Disease</strong>
                               <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Disease"
                                data-bs-content="Filter the graph by disease cohort. Select a disease to show only nodes and edges associated with that cohort.">
@@ -99,7 +99,29 @@
                             </div>
 
                         <!-- MGE Group -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label"><strong>ARG Resistance Group</strong>
+                              <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="ARG Resistance Group" data-bs-content="Filter ARG nodes by resistance group classification. This can be combined with MGE Group and other filters.">
+                              ?
+                              </button>
+                            </label>
+                            <div class="dropdown w-100" data-target-input="#argResistanceGroupFilter">
+                                <button
+                                class="btn dropdown-btn w-100 text-start"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                All ARG Groups
+                            </button>
+                            <ul class="dropdown-menu dropdown-select w-100" id="argResistanceGroupMenu">
+                                <li><a class="dropdown-item active" data-value="all">All ARG Groups</a></li>
+                            </ul>
+                            </div>
+                            <input type="hidden" id="argResistanceGroupFilter" value="all">
+                        </div>
+
+                        <!-- MGE Group -->
+                        <div class="col-md-3">
                             <label class="form-label"><strong>MGE Group</strong>
                               <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Mobile Genetic Element Group" data-bs-content="Filter MGEs by final classification group. This helps narrow the graph to specific classes of mobile genetic elements.">
                               ?
@@ -337,39 +359,51 @@
         </div>
                 <div id="hub-analysis-wrap" class="card shadow-sm mt-3 d-none">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <button
-            class="btn btn-sm btn-outline-dark"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#hub-analysis-collapse"
-            aria-expanded="false"
-            aria-controls="hub-analysis-collapse">
-            Longitudinal Support Analysis
-          </button>
-
-          <button id="downloadHubCsvBtn" class="btn btn-sm btn-outline-dark" type="button">
-            Download Longitudinal Support CSV
-          </button>
+                    <h5 class="mb-0">Longitudinal Support Analysis</h5>
+                    <div class="d-flex align-items-center gap-2">
+                      <button id="viewHubGridsBtn" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2" type="button" aria-controls="hub-analysis-collapse">
+                        View
+                      </button>
+                      <button id="downloadHubCsvBtn" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2" type="button">
+                        Download CSV
+                      </button>
+                    </div>
         </div>
+
+                  <div class="card-body pb-0 pt-3">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                      <label for="hubTopCount" class="form-label mb-0 fw-semibold">Prominent entities to show</label>
+                      <select id="hubTopCount" class="form-select form-select-sm" style="width: 110px;">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                      </select>
+                    </div>
+                  </div>
+
 
         <div id="hub-analysis-collapse" class="collapse">
           <div class="card-body">
 
-            <div class="hub-section">
-              <div class="hub-section-title">Top 5 MGE Entities</div>
+            <div class="hub-section" id="mgeHubSection">
+              <div class="hub-section-title" id="topMgeTitle">Most Prominent 5 MGE Entities</div>
               <div class="hub-grid-wrap">
                 <table class="hub-grid-table" id="mge-hub-table">
                   <thead>
                     <tr>
-                      <th>Label</th>
-                      <th>Group</th>
-                      <th>Visible Instances</th>
+                      <th>MGE</th>
+                      <th>Class</th>
+                      <th>Node Instances</th>
                       <th>Unique Neighbors</th>
-                      <th>Aggregated Degree</th>
-                      <th>Agg. Colo Support</th>
-                      <th>Agg. Temp Support</th>
+                      <th>Agg Node Degree</th>
                       <th>Stage Span</th>
-                      <th>Temporal Links by Stage</th>
+                      <th>Donor -> Pre</th>
+                      <th>Donor -> Post</th>
+                      <th>Pre -> Post</th>
+                      <th>Post -> Post</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -377,21 +411,22 @@
               </div>
             </div>
 
-            <div class="hub-section mt-4">
-              <div class="hub-section-title">Top 5 ARG Entities</div>
+            <div class="hub-section mt-4" id="argHubSection">
+              <div class="hub-section-title" id="topArgTitle">Most Prominent 5 ARG Entities</div>
               <div class="hub-grid-wrap">
                 <table class="hub-grid-table" id="arg-hub-table">
                   <thead>
                      <tr>
-                      <th>Label</th>
-                      <th>Group</th>
-                      <th>Visible Instances</th>
+                      <th>ARG</th>
+                      <th>Resistance Group</th>
+                      <th>Node Instances</th>
                       <th>Unique Neighbors</th>
-                      <th>Aggregated Degree</th>
-                      <th>Agg. Colo Support</th>
-                      <th>Agg. Temp Support</th>
+                      <th>Agg Node Degree</th>
                       <th>Stage Span</th>
-                      <th>Temporal Links by Stage</th>
+                      <th>Donor -> Pre</th>
+                      <th>Donor -> Post</th>
+                      <th>Pre -> Post</th>
+                      <th>Post -> Post</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
