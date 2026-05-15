@@ -1,8 +1,8 @@
 import csv
 
-csv_file_path = "../data/MGE_total_classification.xlsx - Sheet.csv"
-text_file_path = '../scripts/mge_id.txt'
-output_file_name = '../scripts/mge_name.txt'
+csv_file_path = "../../data/MGE_total_classification.xlsx - Sheet.csv"
+text_file_path = '../../scripts/mge_id.txt'
+output_file_name = '../../scripts/mge_name.txt'
 
 '''
 for plasmids/prophages (where final_classification= plasmid), using 'socus to name the gene

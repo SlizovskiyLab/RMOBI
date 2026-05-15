@@ -47,9 +47,26 @@ Any derivative work must also be distributed under the same license.
 See the [`LICENSE`](LICENSE) file for the full license text.
 
 
+## Project Folder Structure
+
+The repository is organized into the following major folders:
+
+- `analysis_scripts/`: Python scripts used to generate manuscript figures and summary plots (upset plots, transition rates, grouped bars, nested donuts, stacked charts, pie charts, and heatmaps), with outputs saved under `analysis_scripts/images/`.
+- `backend/`: Core C++ implementation for parsing inputs, building ARG-MGE temporal networks, running analyses, and exporting outputs (includes `src/`, `include/`, `scripts/`, and build artifacts).
+- `config/`: Runtime configuration files such as path mappings used by the backend pipeline.
+- `data/`: Input datasets and reference tables used for graph construction and downstream analyses.
+- `docs/`: Static website assets and pages for the public RMOBI visualization interface (GitHub Pages frontend).
+- `json/`: Generated network JSON files consumed by the frontend visualizations.
+- `output/`: Analysis results exported by the backend (graph statistics and grouped result folders).
+- `rmobi/`: Project-specific Python module/package files used by the analysis workflow.
+
+- `LICENSE`: Project license (GPLv3).
+- `README.md`: Project overview, setup, and usage documentation.
 
 
-## To Run the C++ Framework Locally  
+
+
+## To Run the Framework Locally  
 
 ### Prerequisites
 
@@ -61,6 +78,20 @@ Standard C++ libraries (<iostream>, <fstream>, <map>, <vector>, etc.)
 
 JSON library (e.g., nlohmann/json)
 
+Python 3.10+ for analysis and plotting scripts
+
+Python packages used by `analysis_scripts/`:
+
+- `numpy`
+- `pandas`
+- `matplotlib`
+- `seaborn`
+
+You can install these packages with:
+
+```bash
+python3 -m pip install numpy pandas matplotlib seaborn
+```
 
 ## Clone the repository
 git clone https://github.com/SlizovskiyLab/RMOBI.git
@@ -110,6 +141,7 @@ g++ -std=c++17 -Wall -Iinclude -Ithird_party backend/src/*.cpp -o rmobi.exe
 
 ./rmobi.exe
 
+
 ### Run Visualization Tool Locally
 Step 1: cd docs
 
@@ -118,5 +150,9 @@ Step 2: python3 -m http.server 8080
 http://localhost:8080/index.html
 
 
+###  Generate plots
+1: cd analysis_scripts 
+
+2: python3 run_all_analysis.py 
 
 

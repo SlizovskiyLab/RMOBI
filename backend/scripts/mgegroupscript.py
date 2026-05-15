@@ -1,8 +1,8 @@
 import csv
 
-csv_file_path = "../data/MGE_total_classification.xlsx - Sheet.csv"
-text_file_path = '../scripts/mge_id.txt'
-output_file_name = '../scripts/mge_group.txt'
+csv_file_path = "../../data/MGE_total_classification.xlsx - Sheet.csv"
+text_file_path = '../../scripts/mge_id.txt'
+output_file_name = '../../scripts/mge_group.txt'
 
 try:
     csv_data = {}

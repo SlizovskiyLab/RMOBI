@@ -2,8 +2,8 @@ import csv
 from collections import OrderedDict
 from typing import Dict, List
 
-csv_file_path = "../data/patientwise_colocalization_by_timepoint.csv"
-output_file_name = '../scripts/mge_id.txt'
+csv_file_path = "../../data/patientwise_colocalization_by_timepoint.csv"
+output_file_name = '../../scripts/mge_id.txt'
 
 def create_unique_group_id_map(
     csv_file_path: str,

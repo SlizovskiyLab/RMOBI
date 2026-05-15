@@ -5,13 +5,13 @@ from typing import Dict, List, Optional, Iterable, Tuple
 import re
 
 
-csv_file_path = "../data/patientwise_colocalization_by_timepoint.csv"
-megares_db_path = "../data/megares_database_v3.00.fasta"
-output_map_path = "../data/arg_id_map.cpp"
-output_map_json_path = "../data/arg_group_id_map.json"
-arg_group_cpp_path = "../data/arg_group_id_map.cpp"
-arg_resistance_group_cpp_path = "../data/arg_resistance_group_id_map.cpp"
-arg_snpconfirm_cpp_path = "../data/arg_snpconfirm_id_map.cpp"
+csv_file_path = "../../data/patientwise_colocalization_by_timepoint.csv"
+megares_db_path = "../../data/megares_database_v3.00.fasta"
+output_map_path = "../../data/arg_id_map.cpp"
+output_map_json_path = "../../data/arg_group_id_map.json"
+arg_group_cpp_path = "../../data/arg_group_id_map.cpp"
+arg_resistance_group_cpp_path = "../../data/arg_resistance_group_id_map.cpp"
+arg_snpconfirm_cpp_path = "../../data/arg_snpconfirm_id_map.cpp"
 
 
 
