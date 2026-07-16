@@ -9,6 +9,13 @@
 #include <string>
 #include "../external/json.hpp"
 
+/**
+ * @file ConfigLoader.h
+ * @brief Contains functions for loading configuration parameters for the project.
+ *
+ * This file contains functions for loading configuration parameters from a JSON file, including input and output paths, and visualization settings.
+ */
+
 struct Config {
     std::string input_data_path;
 

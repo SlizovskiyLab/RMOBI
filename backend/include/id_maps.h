@@ -7,6 +7,13 @@
 #include <unordered_map>
 #include <string>
 
+/**
+ * @file IdMaps.h
+ * @brief Contains the declarations of ID maps for ARGs and MGEs.
+ *
+ * This file contains the declarations of unordered maps that associate IDs with names and other attributes for ARGs and MGEs.
+ */
+
 extern const std::unordered_map<int, std::string> argIdMap;
 extern const std::unordered_map<int, std::string> mgeIdMap;
 extern const std::unordered_map<int, std::string> mgeNameMap;

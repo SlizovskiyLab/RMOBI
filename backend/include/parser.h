@@ -9,6 +9,13 @@
 #include <map> // Required for std::map
 #include "graph.h"
 
+/**
+ * @file Parser.h
+ * @brief Contains the declaration of the parseData function and related utilities.
+ *
+ * This file contains the declaration of the parseData function, which reads a CSV file and populates a Graph object with nodes and edges based on the data in the file.
+ */
+
 namespace std {
     template <>
     struct hash<std::pair<int, bool>> {

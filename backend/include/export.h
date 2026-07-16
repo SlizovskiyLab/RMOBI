@@ -7,6 +7,13 @@
 #include <string>
 #include "graph.h"
 
+/**
+ * @file Export.h
+ * @brief Contains functions for exporting graph data to DOT format, not used in the web app.
+ *
+ * This file contains functions for exporting a graph to DOT format, which can be used for visualization with Graphviz. 
+ */
+
 std::string getNodeName(const Node& node);
 std::string getNodeLabel(const Node& node);
 // std::string getTimepointColor(const Timepoint& tp);

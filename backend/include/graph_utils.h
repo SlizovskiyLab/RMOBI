@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <map>
 
+# file contains utility functions for filtering and manipulating graph data.
+
 Graph filterGraphByARGName(const Graph& g, const std::string& argName);
 Graph filterGraphByMGEName(const Graph& g, const std::string& mgeName);
 Graph filterGraphByMGEGroup(const Graph& g, const std::string& groupName);

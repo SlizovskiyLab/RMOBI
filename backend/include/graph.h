@@ -15,6 +15,12 @@
 #include <ostream>
 #include "Timepoint.h"
 
+/**
+ * @file Graph.h
+ * @brief Defines the Graph class and related data structures.
+ *
+ */
+
 // ------------------ Node ------------------
 
 struct Node {

@@ -6,6 +6,13 @@
 #include <map>
 #include "graph.h"
 
+/**
+ * @file ExportGraphJson.h
+ * @brief Contains functions for exporting graph data to JSON format for the web app.
+ *
+ * This file contains functions for exporting a graph to JSON format, which is used by the web app for visualization and analysis.
+ */
+
 bool exportGraphToJsonSimple(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap);
 
 bool exportParentGraphToJson(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap, bool showLabels = true);

@@ -12,6 +12,13 @@
 #include "graph.h"
 #include "Timepoint.h"
 
+/**
+ * @file Analysis.h
+ * @brief Defines the analysis functions for graph data.
+ *
+ * This file contains functions for analyzing, querying graph data and exporting to csv files.
+ */
+
 bool isPostFMT(const Timepoint& tp);
 bool isPreFMT(const Timepoint& tp);
 bool isDonor(const Timepoint& tp);

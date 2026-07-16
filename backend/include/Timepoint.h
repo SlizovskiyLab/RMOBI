@@ -13,6 +13,10 @@
 //     Day14 = 14
 // };
 
+/**
+ * @file Timepoint.h
+ * @brief Defines the Timepoint enum class and provides a function to convert Timepoint values to strings.
+ */
 
 enum class Timepoint {
     Donor = 1000,
