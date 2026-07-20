@@ -18,6 +18,8 @@ SCRIPT_ORDER = [
     "5_stacked_colocalization_status_top10.py",
     "6_pie_charts_resistance_groups_graph2.py",
     "7_heatmaps_graph2.py",
+    "9_paired_emergence_disappearance.py",
+    "10_emergence_disappearance_log_ratio.py",
 ]
 
 RUN_FROM_ROOT: set[str] = set()
