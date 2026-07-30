@@ -430,11 +430,11 @@ CFX,gene:plasmid:133396,0,0,1,1
 CFX,gene:plasmid:133400,0,0,1,1
 CFX,gene:plasmid:133401,0,0,1,1
 CFX,gene:plasmid:133402,0,0,1,1
-CFX,gene:plasmid:141426,0,0,1,13
+CFX,gene:plasmid:141426,0,0,1,12
 CFX,gene:plasmid:141426,0,1,0,1
 CFX,gene:plasmid:141426,0,1,1,4
-CFX,gene:plasmid:141426,1,0,0,7
-CFX,gene:plasmid:141426,1,0,1,12
+CFX,gene:plasmid:141426,1,0,0,6
+CFX,gene:plasmid:141426,1,0,1,13
 CFX,gene:plasmid:141426,1,1,0,2
 CFX,gene:plasmid:141426,1,1,1,4
 CFX,gene:plasmid:141431,0,0,1,1

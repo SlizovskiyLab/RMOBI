@@ -9407,14 +9407,6 @@
       "argResistanceMap": "Drugs",
       "colocalization": "CFX–gene:plasmid:141426",
       "mgeGroup": "plasmid",
-      "patients": 1,
-      "status": "emerged"
-    },
-    {
-      "argResistance": "betalactams",
-      "argResistanceMap": "Drugs",
-      "colocalization": "CFX–gene:plasmid:141426",
-      "mgeGroup": "plasmid",
       "patients": 4,
       "status": "persisted"
     },
@@ -9423,7 +9415,7 @@
       "argResistanceMap": "Drugs",
       "colocalization": "CFX–gene:plasmid:141426",
       "mgeGroup": "plasmid",
-      "patients": 5,
+      "patients": 6,
       "status": "transferred"
     },
     {

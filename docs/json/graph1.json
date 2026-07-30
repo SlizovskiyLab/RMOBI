@@ -15356,6 +15356,20 @@
     },
     {
       "diseaseCounts": {
+        "Melanoma": 1
+      },
+      "diseases": [
+        "Melanoma"
+      ],
+      "individualCount": 1,
+      "isColo": false,
+      "source": "N_42_ARG_1000",
+      "sourceTimepoint": 1000,
+      "target": "N_42_ARG_29",
+      "targetTimepoint": 29
+    },
+    {
+      "diseaseCounts": {
         "rCDI": 1
       },
       "diseases": [
@@ -60111,6 +60125,20 @@
       "sourceTimepoint": 1000,
       "target": "N_139_ARG_7",
       "targetTimepoint": 7
+    },
+    {
+      "diseaseCounts": {
+        "Melanoma": 1
+      },
+      "diseases": [
+        "Melanoma"
+      ],
+      "individualCount": 1,
+      "isColo": false,
+      "source": "N_139_ARG_1000",
+      "sourceTimepoint": 1000,
+      "target": "N_139_ARG_44",
+      "targetTimepoint": 44
     },
     {
       "diseaseCounts": {
@@ -116701,6 +116729,20 @@
       "sourceTimepoint": 1000,
       "target": "N_1445_MGE_15",
       "targetTimepoint": 15
+    },
+    {
+      "diseaseCounts": {
+        "Melanoma": 1
+      },
+      "diseases": [
+        "Melanoma"
+      ],
+      "individualCount": 1,
+      "isColo": false,
+      "source": "N_1445_MGE_1000",
+      "sourceTimepoint": 1000,
+      "target": "N_1445_MGE_29",
+      "targetTimepoint": 29
     },
     {
       "diseaseCounts": {

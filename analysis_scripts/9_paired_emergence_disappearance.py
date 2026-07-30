@@ -175,7 +175,7 @@ def plot_paired_rates(patient_rates: pd.DataFrame, summary: pd.DataFrame) -> Non
         label = (
             # "Wilcoxon paired test\n"
             f"P adj = {format_p_value(float(stats['Adjusted P']))}\n"
-            f"median diff = {float(stats['Median paired difference']):.3f}"
+            f"median (ER-DR) = {float(stats['Median paired difference']):.3f}"
         )
         ax.text(
             0.5,
@@ -194,6 +194,9 @@ def plot_paired_rates(patient_rates: pd.DataFrame, summary: pd.DataFrame) -> Non
         ax.set_xlim(-0.35, 1.35)
         ax.set_ylim(-0.05, 1.32)
         ax.set_yticks(np.linspace(0, 1, 6))
+        ax.tick_params(axis="y", labelleft=True, labelsize=11)
+        for tick in ax.get_yticklabels():
+            tick.set_fontweight("bold")
         ax.grid(axis="y", linestyle="--", alpha=0.25)
         ax.set_axisbelow(True)
 

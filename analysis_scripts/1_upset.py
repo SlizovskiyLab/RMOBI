@@ -6,7 +6,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-DATA_PATH = Path("../data/patientwise_colocalization_by_timepoint.csv")
+ANALYSIS_DIR = Path(__file__).resolve().parent
+DATA_PATH = ANALYSIS_DIR.parent / "data" / "patientwise_colocalization_by_timepoint.csv"
 OUTPUT_DIR = Path("images/upset")
 DISEASES = ["MDRB", "Melanoma", "rCDI"]
 
@@ -210,7 +211,59 @@ def parse_cpp_int_to_string_map(cpp_text: str, map_name: str) -> Dict[int, str]:
 def parse_cpp_int_to_bool_map(cpp_text: str, map_name: str) -> Dict[int, bool]:
     block = _extract_initializer_block(cpp_text, map_name)
     entries = re.findall(r"\{\s*(\d+)\s*,\s*(true|false)\s*\}", block, flags=re.I)
-    return {int(k): (v.lower() == "false") for k, v in entries}
+    return {int(k): (v.lower() == "true") for k, v in entries}
+
+def print_unique_arg_snp_summary(
+    df: pd.DataFrame,
+    id_to_group: Dict[int, str],
+    id_to_requires_snp_confirmation: Dict[int, bool],
+) -> None:
+    unique_args = set(df["MEGARes group"].astype(str).str.strip().dropna())
+    group_to_snp_status: Dict[str, set] = {}
+
+    for arg_id, arg_group in id_to_group.items():
+        if arg_id not in id_to_requires_snp_confirmation:
+            continue
+        group_to_snp_status.setdefault(arg_group, set()).add(
+            id_to_requires_snp_confirmation[arg_id]
+        )
+
+    snp_confirmed_args = {
+        arg for arg in unique_args
+        if arg in group_to_snp_status and False in group_to_snp_status[arg]
+    }
+    snp_not_confirmed_args = {
+        arg for arg in unique_args
+        if arg in group_to_snp_status and True in group_to_snp_status[arg]
+    }
+    unmapped_args = unique_args - set(group_to_snp_status)
+
+    print("\nUnique ARG SNP-confirmation summary")
+    print(f"Unique ARG groups in input: {len(unique_args)}")
+    print(f"SNP confirmed / usable ARG groups: {len(snp_confirmed_args)}")
+    print(f"SNP not confirmed / requires SNP confirmation ARG groups: {len(snp_not_confirmed_args)}")
+    print(f"ARG groups missing from SNP map: {len(unmapped_args)}")
+
+    print("\nUnique ARG groups by disease")
+    for disease in DISEASES:
+        disease_args = set(
+            df.loc[
+                df["Disease_type"].astype(str).str.strip().str.lower() == disease.lower(),
+                "MEGARes group",
+            ]
+            .astype(str)
+            .str.strip()
+            .dropna()
+        )
+        disease_snp_confirmed = disease_args & snp_confirmed_args
+        disease_snp_not_confirmed = disease_args & snp_not_confirmed_args
+        disease_unmapped = disease_args & unmapped_args
+        print(
+            f"{disease}: total={len(disease_args)}, "
+            f"snp_confirmed={len(disease_snp_confirmed)}, "
+            f"snp_not_confirmed={len(disease_snp_not_confirmed)}, "
+            f"unmapped={len(disease_unmapped)}"
+        )
 
 # ---- USAGE ----
 # C++ code (both maps) into a string:
@@ -774,9 +827,13 @@ const std::unordered_map<int, bool> argIDSNPConfirmation = {
 """
 
 id_to_group = parse_cpp_int_to_string_map(cpp_text, "argIdMap")
-id_to_snp   = parse_cpp_int_to_bool_map(cpp_text, "argIDSNPConfirmation")
+id_to_requires_snp_confirmation = parse_cpp_int_to_bool_map(cpp_text, "argIDSNPConfirmation")
 
-snp_confirmed_groups = {id_to_group[i] for i, ok in id_to_snp.items() if ok and i in id_to_group}
+snp_confirmed_groups = {
+    id_to_group[i]
+    for i, requires_snp_confirmation in id_to_requires_snp_confirmation.items()
+    if not requires_snp_confirmation and i in id_to_group
+}
 
 print("SNP-confirmed groups:", len(snp_confirmed_groups))
 # print(sorted(list(snp_confirmed_groups))[:], "...")
@@ -788,6 +845,7 @@ if not DATA_PATH.exists():
 df = pd.read_csv(DATA_PATH)
 df = df.copy()
 df["MEGARes group"] = df["MEGARes group"].astype(str).str.strip()
+print_unique_arg_snp_summary(df, id_to_group, id_to_requires_snp_confirmation)
 
 df_snp = df[df["MEGARes group"].isin(snp_confirmed_groups)].copy()
 

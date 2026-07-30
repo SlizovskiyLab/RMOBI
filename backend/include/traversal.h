@@ -11,6 +11,13 @@
 #include "Timepoint.h"
 #include "graph.h"
 
+/**
+ * @file Traversal.h
+ * @brief Defines the traversal functions for graph data.
+ *
+ * This file contains functions for traversing the graph and collecting colocalization information.
+ */
+
 // std::map<std::pair<int, int>, std::set<Timepoint>> colocalizationTimeline;
 void traverseAdjacency(const Graph& graph, const std::unordered_map<Node, std::unordered_set<Node>>& adjacency, 
     std::map<std::pair<int, int>, std::multiset<Timepoint>>& colocalizationTimeline);

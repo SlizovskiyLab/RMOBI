@@ -1,13 +1,25 @@
+from __future__ import annotations
+
+import os
 import re
+from pathlib import Path
+
+os.environ.setdefault("MPLCONFIGDIR", str(Path("/tmp") / "rmobi-matplotlib"))
+os.environ.setdefault("XDG_CACHE_HOME", str(Path("/tmp") / "rmobi-cache"))
+
 import numpy as np
 import pandas as pd
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 
 DISEASE_ORDER = ["MDRB", "Melanoma", "rCDI"]
-DATA_PATH = Path("../data/patientwise_colocalization_by_timepoint.csv")
-OUTPUT_DIR = Path("images/transition_rates/")
+ANALYSIS_DIR = Path(__file__).resolve().parent
+DATA_PATH = ANALYSIS_DIR.parent / "data" / "patientwise_colocalization_by_timepoint.csv"
+OUTPUT_DIR = ANALYSIS_DIR / "images" / "transition_rates"
+UPSET_SCRIPT_PATH = ANALYSIS_DIR / "1_upset.py"
 # ---------------------------
 #
 # ---------------------------
@@ -42,10 +54,51 @@ def add_phase_presence(df: pd.DataFrame) -> pd.DataFrame:
     df["PostAny_p"] = (df["PostFMT1_p"] | df["PostFMT2_p"] | df["PostFMT3_p"]).astype(int)
     return df
 
+def _extract_initializer_block(cpp_text: str, map_name: str) -> str:
+    match = re.search(rf"\b{re.escape(map_name)}\b\s*=\s*\{{(.*?)\}}\s*;", cpp_text, flags=re.S)
+    if not match:
+        raise ValueError(f"Could not find initializer for '{map_name}'")
+    return match.group(1)
+
+def parse_cpp_int_to_string_map(cpp_text: str, map_name: str) -> dict[int, str]:
+    block = _extract_initializer_block(cpp_text, map_name)
+    entries = re.findall(r"\{\s*(\d+)\s*,\s*\"([^\"]+)\"\s*\}", block)
+    return {int(key): value for key, value in entries}
+
+def parse_cpp_int_to_bool_map(cpp_text: str, map_name: str) -> dict[int, bool]:
+    block = _extract_initializer_block(cpp_text, map_name)
+    entries = re.findall(r"\{\s*(\d+)\s*,\s*(true|false)\s*\}", block, flags=re.I)
+    return {int(key): value.lower() == "true" for key, value in entries}
+
+def load_snp_confirmed_arg_groups() -> set[str]:
+    source = UPSET_SCRIPT_PATH.read_text(encoding="utf-8")
+    cpp_match = re.search(r"cpp_text\s*=\s*r\"\"\"(.*?)\"\"\"", source, flags=re.S)
+    if not cpp_match:
+        raise ValueError(f"Could not find cpp_text mapping block in {UPSET_SCRIPT_PATH}")
+
+    cpp_text = cpp_match.group(1)
+    id_to_group = parse_cpp_int_to_string_map(cpp_text, "argIdMap")
+    id_to_requires_snp_confirmation = parse_cpp_int_to_bool_map(cpp_text, "argIDSNPConfirmation")
+
+    # Match 1_upset.py and backend parsing: true means the ARG requires SNP
+    # confirmation, so transition-rate analyses keep only false/usable groups.
+    return {
+        id_to_group[arg_id]
+        for arg_id, requires_snp_confirmation in id_to_requires_snp_confirmation.items()
+        if not requires_snp_confirmation and arg_id in id_to_group
+    }
+
+def filter_to_snp_confirmed_args(df: pd.DataFrame) -> pd.DataFrame:
+    snp_confirmed_groups = load_snp_confirmed_arg_groups()
+    df = df.copy()
+    df["MEGARes group"] = df["MEGARes group"].astype(str).str.strip()
+    return df[df["MEGARes group"].isin(snp_confirmed_groups)].copy()
+
 def compute_patient_rates_from_definitions(
     df: pd.DataFrame,
     coloc_id_cols=("Patient", "MEGARes group", "MGE gene"),
 ):
+    df = filter_to_snp_confirmed_args(df)
     df = add_phase_presence(df)
     df_u = df.drop_duplicates(list(coloc_id_cols)).copy()
 
