@@ -77,6 +77,23 @@ function getDiseasesFromCounts(diseaseCounts) {
   return Object.keys(diseaseCounts);
 }
 
+function getSupportCount(item, disease = "all", study = "all") {
+  const diseaseCounts = item?.diseaseCounts || {};
+  const studyCounts = item?.studyCounts || {};
+  const diseaseStudyCounts = item?.diseaseStudyCounts || {};
+
+  if (disease !== "all" && study !== "all") {
+    return Number(diseaseStudyCounts?.[disease]?.[study]) || 0;
+  }
+  if (disease !== "all") {
+    return Number(diseaseCounts[disease]) || 0;
+  }
+  if (study !== "all") {
+    return Number(studyCounts[study]) || 0;
+  }
+  return Object.values(diseaseCounts).reduce((sum, v) => sum + (Number(v) || 0), 0);
+}
+
 
 function enrichNodes(nodes) {
   for (const n of nodes) {
@@ -247,6 +264,8 @@ function loadAndRenderGraph(fileKey) {
 function populateFilters(data) {
   const mgeMenu = document.querySelector("#mgeGroupMenu");
   const argResistanceMenu = document.querySelector("#argResistanceGroupMenu");
+  const diseaseMenu = document.querySelector("#diseaseMenu");
+  const studyMenu = document.querySelector("#studyMenu");
 
   mgeMenu.innerHTML = `
         <li><a class="dropdown-item active" data-value="all">All Groups</a></li>
@@ -290,8 +309,99 @@ function populateFilters(data) {
     });
   }
 
+  if (diseaseMenu || studyMenu) {
+    updateDiseaseStudyDropdowns(data, { keepSelections: true });
+  }
+
     bindCustomDropdownHandlers();
 
+}
+
+function getDiseaseStudyRelations(data) {
+  const diseaseToStudies = new Map();
+  const studyToDiseases = new Map();
+  const sources = [...(data.nodes || []), ...(data.links || [])];
+
+  sources.forEach(item => {
+    Object.entries(item.diseaseStudyCounts || {}).forEach(([disease, studyCounts]) => {
+      if (!diseaseToStudies.has(disease)) diseaseToStudies.set(disease, new Set());
+
+      Object.keys(studyCounts || {}).forEach(study => {
+        diseaseToStudies.get(disease).add(study);
+        if (!studyToDiseases.has(study)) studyToDiseases.set(study, new Set());
+        studyToDiseases.get(study).add(disease);
+      });
+    });
+  });
+
+  return { diseaseToStudies, studyToDiseases };
+}
+
+function setDropdownOptions(hiddenSelector, allLabel, values, selectedValue) {
+  const dropdown = document.querySelector(`.dropdown[data-target-input='${hiddenSelector}']`);
+  const hiddenInput = document.querySelector(hiddenSelector);
+  const menu = dropdown?.querySelector(".dropdown-menu");
+  const button = dropdown?.querySelector(".dropdown-btn");
+  if (!dropdown || !hiddenInput || !menu || !button) return "all";
+
+  const validValues = new Set(values);
+  const nextValue = selectedValue !== "all" && validValues.has(selectedValue) ? selectedValue : "all";
+  hiddenInput.value = nextValue;
+  button.textContent = nextValue === "all" ? allLabel : nextValue;
+
+  const allActive = nextValue === "all" ? " active" : "";
+  const items = [`<li><a class="dropdown-item${allActive}" data-value="all">${allLabel}</a></li>`];
+  values.forEach(value => {
+    const active = value === nextValue ? " active" : "";
+    const safeValue = escapeHtml(value);
+    items.push(`<li><a class="dropdown-item${active}" data-value="${safeValue}" title="${safeValue}">${safeValue}</a></li>`);
+  });
+  menu.innerHTML = items.join("");
+
+  return nextValue;
+}
+
+function updateDiseaseStudyDropdowns(data, options = {}) {
+  const { keepSelections = true } = options;
+  const { diseaseToStudies, studyToDiseases } = getDiseaseStudyRelations(data);
+
+  let selectedDisease = keepSelections ? d3.select("#diseaseFilter").property("value") : "all";
+  let selectedStudy = keepSelections ? d3.select("#studyFilter").property("value") : "all";
+
+  const allDiseases = [...diseaseToStudies.keys()].sort();
+  const allStudies = [...studyToDiseases.keys()].sort();
+
+  let diseaseOptions = allDiseases;
+  let studyOptions = allStudies;
+
+  if (selectedStudy !== "all") {
+    diseaseOptions = [...(studyToDiseases.get(selectedStudy) || new Set())].sort();
+  }
+
+  selectedDisease = setDropdownOptions("#diseaseFilter", "All Diseases", diseaseOptions, selectedDisease);
+
+  if (selectedDisease !== "all") {
+    studyOptions = [...(diseaseToStudies.get(selectedDisease) || new Set())].sort();
+  } else if (selectedStudy !== "all") {
+    studyOptions = allStudies;
+  }
+
+  selectedStudy = setDropdownOptions("#studyFilter", "All Studies", studyOptions, selectedStudy);
+
+  if (selectedStudy !== "all") {
+    diseaseOptions = [...(studyToDiseases.get(selectedStudy) || new Set())].sort();
+    setDropdownOptions("#diseaseFilter", "All Diseases", diseaseOptions, selectedDisease);
+  }
+
+  bindCustomDropdownHandlers();
+}
+
+function handleDiseaseStudyFilterChange() {
+  const data = originalData[currentGraphKey];
+  if (data) {
+    updateDiseaseStudyDropdowns(data, { keepSelections: true });
+  }
+  applyFiltersAndDraw();
 }
 
 function bindCustomDropdownHandlers() {
@@ -327,6 +437,7 @@ function bindCustomDropdownHandlers() {
 function resetFilters(redraw = true) {
     // hidden values used by D3
     d3.select("#diseaseFilter").property("value", "all");
+    d3.select("#studyFilter").property("value", "all");
   d3.select("#argResistanceGroupFilter").property("value", "all");
     d3.select("#mgeGroupFilter").property("value", "all");
     d3.select("#argSearch").property("value", "");
@@ -334,6 +445,7 @@ function resetFilters(redraw = true) {
     d3.selectAll(".timepoint-checkbox").property("checked", true);
 
     resetSingleDropdown("#diseaseFilter", "All Diseases");
+    resetSingleDropdown("#studyFilter", "All Studies");
   resetSingleDropdown("#argResistanceGroupFilter", "All ARG Groups");
     resetSingleDropdown("#mgeGroupFilter", "All Groups");
     updateTimepointButtonText();
@@ -372,6 +484,7 @@ function applyFiltersAndDraw() {
 
     const filters = {
         disease: d3.select("#diseaseFilter").property("value"),
+        study: d3.select("#studyFilter").property("value"),
       argResistanceGroup: d3.select("#argResistanceGroupFilter").property("value"),
         mgeGroup: d3.select("#mgeGroupFilter").property("value"),
         timepoints: Array.from(d3.selectAll(".timepoint-checkbox").nodes())
@@ -392,25 +505,19 @@ function applyFiltersAndDraw() {
         workingLinks = workingLinks
             .filter(l => {
           if (!l.isColo) {
-            if (filters.disease === "all") return true;
-            return getTemporalPatientCount(l, filters.disease) > 0;
+            if (filters.disease === "all" && filters.study === "all") return true;
+            return getTemporalPatientCount(l, filters.disease, filters.study) > 0;
           }
-                if (filters.disease === "all") return true;
-
-                const dc = l.diseaseCounts || {};
-                return (Number(dc[filters.disease]) || 0) > 0;
+                if (filters.disease === "all" && filters.study === "all") return true;
+                return getSupportCount(l, filters.disease, filters.study) > 0;
             })
             .map(l => {
           if (!l.isColo) {
-            l.patientCount = getTemporalPatientCount(l, filters.disease);
+            l.patientCount = getTemporalPatientCount(l, filters.disease, filters.study);
             return l;
           }
 
-                const dc = l.diseaseCounts || {};
-                l.patientCount =
-                    filters.disease === "all"
-                        ? Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0)
-                        : Number(dc[filters.disease]) || 0;
+                l.patientCount = getSupportCount(l, filters.disease, filters.study);
 
                 return l;
             });
@@ -418,13 +525,13 @@ function applyFiltersAndDraw() {
       workingLinks = workingLinks
         .map(l => {
           if (!l.isColo) {
-            l.patientCount = getTemporalPatientCount(l, filters.disease);
+            l.patientCount = getTemporalPatientCount(l, filters.disease, filters.study);
           }
           return l;
         })
         .filter(l => {
           if (l.isColo) return true;
-          if (filters.disease === "all") return true;
+          if (filters.disease === "all" && filters.study === "all") return true;
           return (Number(l.patientCount) || 0) > 0;
         });
     }
@@ -436,11 +543,7 @@ function applyFiltersAndDraw() {
 
     if (!currentGraphKey.includes("graph1")) {
         workingNodes = workingNodes.map(n => {
-            const dc = n.diseaseCounts || {};
-            n.patientCount =
-                filters.disease === "all"
-                    ? Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0)
-                    : Number(dc[filters.disease]) || 0;
+            n.patientCount = getSupportCount(n, filters.disease, filters.study);
             return n;
         });
     }
@@ -532,24 +635,22 @@ function getStrictlyFilteredNodeIds(nodes, links, filters) {
         visibleNodeIds.clear();
     }
 
-    // Disease Filter
-    if (filters.disease !== "all") {
+    // Patient Metadata Filters
+    if (filters.disease !== "all" || filters.study !== "all") {
         let diseaseFilteredIds = new Set();
 
         if (currentGraphKey.includes("graph1")) {
             links.forEach(link => {
                 if (!link.isColo) return;
 
-                const dc = link.diseaseCounts || {};
-                if ((Number(dc[filters.disease]) || 0) > 0) {
+                if (getSupportCount(link, filters.disease, filters.study) > 0) {
                     diseaseFilteredIds.add(typeof link.source === "object" ? link.source.id : link.source);
                     diseaseFilteredIds.add(typeof link.target === "object" ? link.target.id : link.target);
                 }
             });
         } else {
             nodes.forEach(node => {
-                const dc = node.diseaseCounts || {};
-                if ((Number(dc[filters.disease]) || 0) > 0) {
+                if (getSupportCount(node, filters.disease, filters.study) > 0) {
                     diseaseFilteredIds.add(node.id);
                 }
             });
@@ -802,13 +903,13 @@ function updateVisualization(data) {
         const activeDisease = d3.select("#diseaseFilter").property("value");
         simNodes.forEach(n => {
             const dc = (n && typeof n.diseaseCounts === "object" && n.diseaseCounts) ? n.diseaseCounts : {};
-            console.log(`Node: ${n.id}, raw diseaseCounts:`, dc);
+            // console.log(`Node: ${n.id}, raw diseaseCounts:`, dc);
             if (activeDisease && activeDisease !== "all") {
                 n.patientCount = Number(dc[activeDisease]) || 0;
             } else {
                 n.patientCount = Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0);
             }
-            console.log(`Node: ${n.id}, PatientCount: ${n.patientCount}`);
+            // console.log(`Node: ${n.id}, PatientCount: ${n.patientCount}`);
         });
         const uniqCounts = new Set(simNodes.map(n => n.patientCount));
         if (uniqCounts.size === 1) {
@@ -920,11 +1021,17 @@ function updateVisualization(data) {
       .force("link", d3.forceLink(simLinks).id(d => d.id).distance(d => d.isColo ? 40 : 60))
       .force("charge", d3.forceManyBody().strength(d => -(40 + (d.degree || 0) * 15)))
       .force("collision", d3.forceCollide().radius(20))
+      // .strength(0.7)
+      // .iterations(1))
       .force("center", d3.forceCenter(cx, cy))
       .force("x", d3.forceX(cx).strength(0.05))
       .force("y", d3.forceY(cy).strength(0.05))
-      .alpha(1)
-      .alphaDecay(0.03)
+      // .alpha(1)
+      // .alphaDecay(0.03)
+      .alpha(0.98)
+      .alphaMin(0.02)
+      .alphaDecay(0.08)
+      // .velocityDecay(0.5)
       .on("tick", ticked)
       .on("end", () => {
         hideGraphLoadingBanner();
@@ -1006,7 +1113,7 @@ function bindTimepointListeners() {
   // Apply filtering when checkbox state changes
   dropdownMenu.addEventListener("change", (event) => {
     if (event.target.classList.contains("timepoint-checkbox")) {
-      console.log("Checkbox changed:", event.target.value, event.target.checked);
+      // console.log("Checkbox changed:", event.target.value, event.target.checked);
       applyFiltersAndDraw();
       updateTimepointButtonText();
     }
@@ -1147,6 +1254,20 @@ function getConnectedNeighborLabels(node, nodes, links, maxNeighbors = 12) {
   return shown.join(", ") + extra;
 }
 
+function formatCounts(counts) {
+  return Object.entries(counts || {})
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
+}
+
+function formatDiseaseStudyCounts(diseaseStudyCounts) {
+  return Object.entries(diseaseStudyCounts || {})
+    .flatMap(([disease, studyCounts]) =>
+      Object.entries(studyCounts || {}).map(([study, count]) => `${disease}/${study}: ${count}`)
+    )
+    .join(", ");
+}
+
 // Show, node details, name, mge group for mges arg group for args. 
 function buildNodeDetailsHTML(node) {
   const isGraph2 = currentGraphKey.includes("graph2");
@@ -1168,9 +1289,9 @@ function buildNodeDetailsHTML(node) {
     }
 
     const diseaseCounts = node.diseaseCounts || {};
-    const diseaseText = Object.entries(diseaseCounts)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(", ");
+    const diseaseText = formatCounts(diseaseCounts);
+    const studyText = formatCounts(node.studyCounts || {});
+    const diseaseStudyText = formatDiseaseStudyCounts(node.diseaseStudyCounts || {});
 
     const patientCount = node.patientCount ??
       Object.values(diseaseCounts).reduce((sum, v) => sum + (Number(v) || 0), 0);
@@ -1183,6 +1304,8 @@ function buildNodeDetailsHTML(node) {
       ${renderDetailRow("Timepoint", formatTimepointLabel(node.timepoint))}
       ${renderDetailRow("Patient Count", patientCount)}
       ${renderDetailRow("Disease Counts", diseaseText || "")}
+      ${renderDetailRow("Study Counts", studyText || "")}
+      ${renderDetailRow("Disease/Study Counts", diseaseStudyText || "")}
       ${renderDetailRow("Degree", degree)}
       ${renderDetailRow("Connected Neighbors", neighbors || "")}
     `;
@@ -1223,9 +1346,9 @@ function buildLinkDetailsHTML(link) {
 
   
   const dc = link.diseaseCounts || {};
-  const diseaseText = Object.entries(dc)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join(", ");
+  const diseaseText = formatCounts(dc);
+  const studyText = formatCounts(link.studyCounts || {});
+  const diseaseStudyText = formatDiseaseStudyCounts(link.diseaseStudyCounts || {});
 
   const patientCount =
     link.patientCount ??
@@ -1242,6 +1365,8 @@ function buildLinkDetailsHTML(link) {
       ${renderDetailRow("Target Timepoint", formatTimepointLabel(targetTp))}
       ${renderDetailRow("Patient Count", patientCount)}
       ${renderDetailRow("Disease Counts", diseaseText || "")}
+      ${renderDetailRow("Study Counts", studyText || "")}
+      ${renderDetailRow("Disease/Study Counts", diseaseStudyText || "")}
     `;
   }
 
@@ -1253,6 +1378,8 @@ function buildLinkDetailsHTML(link) {
     ${renderDetailRow("Target Timepoint", formatTimepointLabel(targetTp))}
     ${renderDetailRow("Patient Count", patientCount)}
     ${renderDetailRow("Disease Counts", diseaseText || "")}
+    ${renderDetailRow("Study Counts", studyText || "")}
+    ${renderDetailRow("Disease/Study Counts", diseaseStudyText || "")}
   `;
 }
 
@@ -1313,7 +1440,7 @@ function renderDetailRow(label, value) {
 
 // --- SVG DOWNLOAD ---
 function downloadCurrentGraphAsSVG() {
-  console.log("SVG clicked");
+  // console.log("SVG clicked");
   const svgEl = document.querySelector("#graph");
   if (!svgEl) return;
   const clone = svgEl.cloneNode(true);
@@ -1434,7 +1561,7 @@ async function downloadCurrentGraphAsPDF() {
 
 // --- Text DOWNLOAD ---
 function downloadCurrentGraphAsText() {
-  console.log("CSV clicked");
+  // console.log("CSV clicked");
 
   if (!currentRenderedData || !currentRenderedData.nodes.length) {
     console.warn("No rendered data available for export");
@@ -1706,15 +1833,9 @@ function getEdgeSupport(link) {
   return Number(link.patientCount ?? link.individualCount ?? 1);
 }
 
-function getTemporalPatientCount(link, activeDisease) {
-  const dc = link?.diseaseCounts;
-  if (dc && typeof dc === "object") {
-    if (activeDisease && activeDisease !== "all") {
-      return Number(dc[activeDisease]) || 0;
-    }
-    return Object.values(dc).reduce((sum, v) => sum + (Number(v) || 0), 0);
-  }
-
+function getTemporalPatientCount(link, activeDisease, activeStudy = "all") {
+  const supportCount = getSupportCount(link, activeDisease, activeStudy);
+  if (supportCount > 0) return supportCount;
   return Number(link?.patientCount ?? link?.individualCount ?? 0);
 }
 
@@ -2361,6 +2482,10 @@ function linkPath(d) {
 
 
 document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+  });
+
   const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
   const popoverList = [...popoverTriggerList].map(el => {
     return new bootstrap.Popover(el, {
@@ -2385,7 +2510,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // --- EVENT LISTENERS ---
 d3.select("#dataset").on("change", function() { loadAndRenderGraph(this.value); });
-d3.select("#diseaseFilter").on("change", applyFiltersAndDraw);
+d3.select("#diseaseFilter").on("change", handleDiseaseStudyFilterChange);
+d3.select("#studyFilter").on("change", handleDiseaseStudyFilterChange);
 d3.select("#argResistanceGroupFilter").on("change", applyFiltersAndDraw);
 d3.select("#mgeGroupFilter").on("change", applyFiltersAndDraw);
 d3.select("#timepointFilter").on("change", applyFiltersAndDraw);
@@ -2449,4 +2575,3 @@ bindTimepointListeners();
 loadAndRenderGraph(currentGraphKey);
 updateTimepointButtonText();
 updateGraphStatsVisibility();
-

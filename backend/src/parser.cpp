@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <map>
 #include <cctype>
+#include <stdexcept>
 
 /* Read input files (CSV), extract (individual, ARG, MGE, timepoint) data */
 
@@ -129,6 +130,68 @@ void parseData(const std::filesystem::path& filename, Graph& graph, std::map<int
                 addEdge(graph, argNode, mgeNode, true, patientID);
             }
         }
+    }
+}
+
+static std::string trimCsvToken(std::string value) {
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front()))) {
+        value.erase(value.begin());
+    }
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back()))) {
+        value.pop_back();
+    }
+    return value;
+}
+
+void loadPatientMetadata(const std::filesystem::path& filename,
+                         std::map<int, std::string>& patientToDiseaseMap,
+                         std::map<int, std::string>& patientToStudyMap) {
+    if (filename.empty()) return;
+
+    std::ifstream infile(filename);
+    if (!infile) {
+        throw std::runtime_error("Could not open patient metadata file: " + filename.string());
+    }
+
+    std::string line;
+    bool isHeader = true;
+    while (std::getline(infile, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::string> tokens;
+        while (std::getline(ss, token, ',')) {
+            tokens.push_back(trimCsvToken(token));
+        }
+
+        if (isHeader) {
+            isHeader = false;
+            continue;
+        }
+        if (tokens.size() < 3 || tokens[0].empty()) continue;
+
+        int patientID = std::stoi(tokens[0]);
+        const std::string& diseaseType = tokens[1];
+        const std::string& studyID = tokens[2];
+
+        auto diseaseIt = patientToDiseaseMap.find(patientID);
+        if (diseaseIt != patientToDiseaseMap.end() && diseaseIt->second != diseaseType) {
+            std::cerr << "Warning: patient metadata disease mismatch for patient "
+                      << patientID << ": input=" << diseaseIt->second
+                      << ", metadata=" << diseaseType << std::endl;
+        } else {
+            patientToDiseaseMap[patientID] = diseaseType;
+        }
+
+        auto studyIt = patientToStudyMap.find(patientID);
+        if (studyIt != patientToStudyMap.end() && studyIt->second != studyID) {
+            throw std::runtime_error("Conflicting Study_ID values for patient " + std::to_string(patientID));
+        }
+        patientToStudyMap[patientID] = studyID;
     }
 }
 

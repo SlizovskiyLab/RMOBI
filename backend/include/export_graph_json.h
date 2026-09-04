@@ -13,12 +13,13 @@
  * This file contains functions for exporting a graph to JSON format, which is used by the web app for visualization and analysis.
  */
 
-bool exportGraphToJsonSimple(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap);
+bool exportGraphToJsonSimple(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap, const std::map<int, std::string>& patientToStudyMap);
 
-bool exportParentGraphToJson(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap, bool showLabels = true);
+bool exportParentGraphToJson(const Graph& g, const std::string& outPathStr, const std::map<int, std::string>& patientToDiseaseMap, const std::map<int, std::string>& patientToStudyMap, bool showLabels = true);
 
 void exportColocalizationsToJSONByDisease(
     const std::map<std::tuple<int,int,int>, std::set<Timepoint>>& colocalizationByIndividual,
     const std::map<int, std::string>& patientToDiseaseMap,
+    const std::map<int, std::string>& patientToStudyMap,
     const std::string& jsonOutputPath  // path to the final JSON file
 );

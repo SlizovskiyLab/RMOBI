@@ -1,0 +1,23 @@
+ Family: betabinomial  ( logit )
+Formula:          
+cbind(n_type, n_total - n_type) ~ cohort + log(k_post) + (1 |      study)
+Data: pat
+
+      AIC       BIC    logLik -2*log(L)  df.resid 
+    434.0     446.4    -211.0     422.0        52 
+
+Random effects:
+
+Conditional model:
+ Groups Name        Variance Std.Dev.
+ study  (Intercept) 0.7919   0.8899  
+Number of obs: 58, groups:  study, 13
+
+Dispersion parameter for betabinomial family (): 1.34 
+
+Conditional model:
+               Estimate Std. Error z value Pr(>|z|)
+(Intercept)     -1.2041     0.8038  -1.498    0.134
+cohortMDRB       1.2601     0.8164   1.544    0.123
+cohortMelanoma   0.8603     0.8514   1.010    0.312
+log(k_post)      0.6799     0.7058   0.963    0.335

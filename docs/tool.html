@@ -49,7 +49,16 @@
             <div class="col-lg-6">
                 <div class="card p-3 h-100 shadow-sm">
                     <div class="row g-3">
-                       <div class="fw-semibold">Graph Filters</div>
+                      <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center w-100 px-1 pt-1 mb-2">
+                          <div class="fw-semibold">Graph Filters</div>
+                          <div class="d-flex align-items-center">
+                            <button id="resetBtn" class="btn btn-outline-dark rounded-circle p-0 d-flex align-items-center justify-content-center" aria-label="Reset filters" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reset filters" style="width: 24px; height: 24px;">
+                              <img src="assets/icons/reset.svg" alt="" width="12" height="12" aria-hidden="true"/>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                         <!-- Graph View -->
                         <div class="col-md-3">
                         <label class="form-label"><strong>Graph View</strong>
@@ -88,7 +97,7 @@
                                 All Diseases
                                 </button>
 
-                                <ul class="dropdown-menu dropdown-select w-100">
+                                <ul class="dropdown-menu dropdown-select w-100" id="diseaseMenu">
                                 <li><a class="dropdown-item active" data-value="all">All Diseases</a></li>
                                 <li><a class="dropdown-item" data-value="Melanoma">Melanoma</a></li>
                                 <li><a class="dropdown-item" data-value="MDRB">MDRB</a></li>
@@ -96,6 +105,30 @@
                                 </ul>
                             </div>
                             <input type="hidden" id="diseaseFilter" value="all">
+                            </div>
+
+                        <!-- Study -->
+                        <div class="col-md-3">
+                            <label class="form-label"><strong>Study</strong>
+                              <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Study"
+                               data-bs-content="Filter the graph by source study. Each study belongs to a single disease cohort.">
+                               ?
+                              </button>
+                            </label>
+                            <div class="dropdown w-100" data-target-input="#studyFilter">
+                                <button
+                                class="btn dropdown-btn w-100 text-start"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                All Studies
+                                </button>
+
+                                <ul class="dropdown-menu dropdown-select w-100" id="studyMenu">
+                                <li><a class="dropdown-item active" data-value="all">All Studies</a></li>
+                                </ul>
+                            </div>
+                            <input type="hidden" id="studyFilter" value="all">
                             </div>
 
                         <!-- MGE Group -->
@@ -143,7 +176,7 @@
                         </div>
 
                         <!-- Patient Stages -->
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label"><strong>Patient Stages</strong>
                               <button type="button" class="help-icon" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top" data-bs-title="Patient Stages" data-bs-content="Select one or more patient time stages to display. These stages represent correspoding donor, pre-FMT, and post-FMT sampling windows.">
                               ?
@@ -196,9 +229,9 @@
                       </div>
 
                         <!-- Reset Button -->
-                        <div class="col-md-2 d-flex align-items-end">
+                        <!-- <div class="col-md-2 d-flex align-items-end">
                             <button id="resetBtn" class="btn btn-outline-dark w-100">Reset Filters</button>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>

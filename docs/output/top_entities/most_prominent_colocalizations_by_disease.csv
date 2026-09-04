@@ -1,0 +1,11 @@
+Rank,Colocalization,Total patients,Total source studies,MDRB patients,MDRB source studies,Melanoma patients,Melanoma source studies,rCDI patients,rCDI source studies
+1,CFX–gene:plasmid:141426,36,12,9,3,10,2,17,8
+2,CORA–gene:plasmid:24561,35,12,4,2,5,2,26,9
+3,ZNTR–gene:plasmid:151260,34,13,6,3,4,2,24,9
+4,FECD–gene:plasmid:156052,27,12,7,3,3,2,17,8
+5,MNTH–gene:plasmid:134726,25,12,6,3,3,2,16,8
+6,CORA–gene:proph:159396,24,10,3,2,2,2,19,7
+7,CORB–gene:proph:163976,23,11,3,3,1,1,19,8
+8,CRP–gene:plasmid:21818,19,8,1,1,1,1,17,7
+9,ARSRM–gene:plasmid:88468,18,9,4,2,1,1,13,6
+10,MEFE–gene:plasmid:141426,17,10,3,3,3,2,11,6

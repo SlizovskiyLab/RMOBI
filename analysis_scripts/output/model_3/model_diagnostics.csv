@@ -1,0 +1,2 @@
+"rows","patients","studies","MGE_classes","logLik","AIC","BIC","dispersion","convergence_code","positive_definite_hessian"
+183,57,13,4,-369.050950483192,776.101900966384,837.082137870371,4.94612953838018,0,TRUE

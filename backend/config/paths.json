@@ -1,6 +1,7 @@
 {
   "input": {
-    "input_data": "data/patientwise_colocalization_by_timepoint.csv"
+    "input_data": "data/patientwise_colocalization_by_timepoint.csv",
+    "patient_metadata": "data/patient_metadata.csv"
   },
   "output": {
     "base": "docs/output",

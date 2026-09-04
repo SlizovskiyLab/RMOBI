@@ -1,0 +1,2 @@
+"patients_exported","patients_fitted","studies","sequencing_depth_adjusted","depth_variable","convergence_code","positive_definite_hessian"
+59,57,13,TRUE,"scaled log1p(median_recipient_depth_gb)",0,TRUE

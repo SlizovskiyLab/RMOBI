@@ -7,9 +7,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-DATA_PATH = Path("../docs/json/temporal_dynamics_disease.json")
-CLASSIFICATION_PATH = Path("../data/MGE_total_classification.xlsx - Sheet.csv")
-OUTPUT_DIR = Path("images/stacked/")
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+
+DATA_PATH = PROJECT_ROOT / "docs/json/temporal_dynamics_disease.json"
+CLASSIFICATION_PATH = PROJECT_ROOT / "data/MGE_total_classification.csv"
+OUTPUT_DIR = PROJECT_ROOT / "images/stacked"
+SUMMARY_OUTPUT_PATH = (
+    PROJECT_ROOT
+    / "docs/output/top_entities/most_prominent_colocalizations_by_disease.csv"
+)
 
 STATUS_ORDER = ["emerged", "disappeared", "persisted", "transferred"]
 STATUS_LABELS = {
@@ -178,6 +185,117 @@ def build_top10_table(records: List[Dict]) -> Tuple[pd.DataFrame, List[str]]:
     return pivot, top10
 
 
+def build_prominent_colocalizations_table(
+    data: Dict[str, List[Dict]], top_n: int = 10
+) -> pd.DataFrame:
+    """Rank ARG-MGE pairs by recipient patient counts across disease cohorts.
+
+    Only recognized temporal-transition records are included. This explicitly
+    excludes donor-only observations while retaining transferred observations,
+    which were detected in recipients after FMT.
+    """
+    diseases = list(data.keys())
+    aggregated: Dict[str, Dict[str, object]] = {}
+
+    for disease, records in data.items():
+        for record in records:
+            status = normalize_status(record.get("status", ""))
+            if status not in STATUS_ORDER:
+                continue
+
+            colocalization = _clean_field(record.get("colocalization", ""))
+            if not colocalization:
+                continue
+
+            entry = aggregated.setdefault(
+                colocalization,
+                {
+                    "patients": {name: 0.0 for name in diseases},
+                    "studies": {name: set() for name in diseases},
+                },
+            )
+            patient_counts = entry["patients"]
+            study_sets = entry["studies"]
+
+            patients = pd.to_numeric(record.get("patients", 0), errors="coerce")
+            if pd.isna(patients):
+                patients = 0
+            patient_counts[disease] += float(patients)
+
+            disease_studies = record.get("diseaseStudyCounts", {}).get(disease, {})
+            if isinstance(disease_studies, dict):
+                study_sets[disease].update(
+                    str(study) for study in disease_studies if _clean_field(study)
+                )
+            else:
+                study_counts = record.get("studyCounts", {})
+                if isinstance(study_counts, dict):
+                    study_sets[disease].update(
+                        str(study) for study in study_counts if _clean_field(study)
+                    )
+                else:
+                    study_sets[disease].update(
+                        str(study)
+                        for study in record.get("studies", [])
+                        if _clean_field(study)
+                    )
+
+    rows = []
+    for colocalization, entry in aggregated.items():
+        patient_counts = entry["patients"]
+        study_sets = entry["studies"]
+        all_studies = set().union(*(study_sets[disease] for disease in diseases))
+        row = {
+            "Colocalization": colocalization,
+            "Total patients": sum(patient_counts.values()),
+            "Total source studies": len(all_studies),
+        }
+        for disease in diseases:
+            row[f"{disease} patients"] = patient_counts[disease]
+            row[f"{disease} source studies"] = len(study_sets[disease])
+        rows.append(row)
+
+    columns = [
+        "Rank",
+        "Colocalization",
+        "Total patients",
+        "Total source studies",
+    ]
+    for disease in diseases:
+        columns.extend([f"{disease} patients", f"{disease} source studies"])
+
+    if not rows:
+        return pd.DataFrame(columns=columns)
+
+    table = pd.DataFrame(rows).sort_values(
+        ["Total patients", "Colocalization"],
+        ascending=[False, True],
+        kind="stable",
+    )
+    if top_n > 0:
+        table = table.head(top_n)
+    table = table.reset_index(drop=True)
+    table.insert(0, "Rank", np.arange(1, len(table) + 1))
+
+    count_columns = [column for column in table if column != "Colocalization"]
+    table[count_columns] = table[count_columns].astype(int)
+    return table[columns]
+
+
+def save_prominent_colocalizations_table(
+    data: Dict[str, List[Dict]], output_path: Path, top_n: int = 10
+) -> pd.DataFrame:
+    """Build, save, and print the cross-disease prominent-colocalization table."""
+    table = build_prominent_colocalizations_table(data, top_n=top_n)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(output_path, index=False)
+
+    print("\nMost prominent ARG-MGE colocalizations (donor-only excluded):")
+    print(table.to_string(index=False))
+    print(f"Saved {output_path}")
+    return table
+
+
 def plot_stacked_for_disease(disease: str, records: List[Dict], mge_name_lookup: Dict[str, str]) -> None:
     pivot, top10 = build_top10_table(records)
     if pivot.empty or len(top10) == 0:
@@ -260,10 +378,13 @@ def main() -> None:
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Could not find JSON file: {DATA_PATH}")
 
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     mge_name_lookup = build_mge_name_lookup(CLASSIFICATION_PATH)
 
     with DATA_PATH.open("r", encoding="utf-8") as f:
         data = json.load(f)
+
+    save_prominent_colocalizations_table(data, SUMMARY_OUTPUT_PATH, top_n=10)
 
     for disease, records in data.items():
         plot_stacked_for_disease(disease, records, mge_name_lookup)

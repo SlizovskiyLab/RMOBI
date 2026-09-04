@@ -18,6 +18,7 @@
 
 struct Config {
     std::string input_data_path;
+    std::string patient_metadata_path;
 
     std::string output_base;
     std::string output_disease;

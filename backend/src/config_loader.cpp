@@ -16,6 +16,7 @@ Config loadConfig(const std::string& filename) {
 
     Config cfg;
     cfg.input_data_path = j.at("input").at("input_data").get<std::string>();
+    cfg.patient_metadata_path = j.at("input").value("patient_metadata", "");
 
     auto output = j.at("output");
     cfg.output_base       = output.at("base").get<std::string>();
@@ -58,4 +59,3 @@ void createOutputDirectories(const Config& cfg) {
     create_directories(path(cfg.output_top_colocalizations).parent_path());
 
 }
-

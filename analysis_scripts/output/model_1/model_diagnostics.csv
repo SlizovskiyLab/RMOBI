@@ -1,0 +1,2 @@
+"patients_exported","patients_fitted","studies","k_post_adjusted","num_contigs_adjusted","total_length_adjusted","non_host_length_adjusted","estimation","zero_inflation","log_likelihood","AIC","BIC","convergence_code","positive_definite_hessian"
+59,57,13,TRUE,TRUE,TRUE,TRUE,"maximum likelihood","none (ziformula = ~0)",-187.920209627109,393.840419254218,412.227880664729,0,TRUE

@@ -17,11 +17,8 @@ SCRIPT_ORDER = [
     "4_nested_donut_transition_mge.py",
     "5_stacked_colocalization_status_top10.py",
     "6_pie_charts_resistance_groups_graph2.py",
-    "7_heatmaps_graph2.py",
-    "8_kruksal_wallis.py",
-    "9_paired_emergence_disappearance.py",
-    "10_emergence_disappearance_log_ratio.py",
-]
+    "7_heatmaps_graph2.py"
+    ]
 
 RUN_FROM_ROOT: set[str] = set()
 
@@ -35,6 +32,15 @@ def ensure_output_dirs() -> None:
         "images/stacked",
         "images/piecharts",
         "images/heatmaps",
+        "images/leave_one_study_out",
+        "images/study_effect_diagnostics",
+        "images/colocalization_profile_study_effects",
+        "images/random_effects_meta_analysis",
+        "output/leave_one_study_out",
+        "output/study_effect_diagnostics",
+        "output/colocalization_profile_study_effects",
+        "output/random_effects_meta_analysis",
+        "output/patient_mge_proportions",
     ]:
         (ANALYSIS_DIR / rel_dir).mkdir(parents=True, exist_ok=True)
 

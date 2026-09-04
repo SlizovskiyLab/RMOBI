@@ -1,0 +1,3 @@
+"model","parameters","log_likelihood","AIC","BIC","convergence_code","positive_definite_hessian"
+"Parsimonious: non_host_length only",7,-190.199930297362,394.399860594723,408.701219469565,0,TRUE
+"Full: all assembly covariates",9,-187.920209627109,393.840419254218,412.227880664729,0,TRUE

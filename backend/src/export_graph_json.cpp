@@ -58,6 +58,56 @@ static inline int tpJson(Timepoint tp) {
     return v;
 }
 
+static void addPatientSupportFields(json& item,
+                                    const std::set<int>& patientIDs,
+                                    const std::map<int, std::string>& patientToDiseaseMap,
+                                    const std::map<int, std::string>& patientToStudyMap) {
+    std::map<std::string, int> diseaseCounter;
+    std::map<std::string, int> studyCounter;
+    std::map<std::string, std::map<std::string, int>> diseaseStudyCounter;
+
+    for (int patientID : patientIDs) {
+        const auto diseaseIt = patientToDiseaseMap.find(patientID);
+        const auto studyIt = patientToStudyMap.find(patientID);
+
+        const std::string diseaseName = diseaseIt != patientToDiseaseMap.end() ? diseaseIt->second : "Unknown";
+        const std::string studyID = studyIt != patientToStudyMap.end() ? studyIt->second : "Unknown";
+
+        diseaseCounter[diseaseName]++;
+        studyCounter[studyID]++;
+        diseaseStudyCounter[diseaseName][studyID]++;
+    }
+
+    json diseases = json::array();
+    json diseaseCounts = json::object();
+    for (const auto& [diseaseName, count] : diseaseCounter) {
+        diseases.push_back(diseaseName);
+        diseaseCounts[diseaseName] = count;
+    }
+
+    json studies = json::array();
+    json studyCounts = json::object();
+    for (const auto& [studyID, count] : studyCounter) {
+        studies.push_back(studyID);
+        studyCounts[studyID] = count;
+    }
+
+    json diseaseStudyCounts = json::object();
+    for (const auto& [diseaseName, studyMap] : diseaseStudyCounter) {
+        diseaseStudyCounts[diseaseName] = json::object();
+        for (const auto& [studyID, count] : studyMap) {
+            diseaseStudyCounts[diseaseName][studyID] = count;
+        }
+    }
+
+    item["individualCount"] = static_cast<int>(patientIDs.size());
+    item["diseases"] = diseases;
+    item["diseaseCounts"] = diseaseCounts;
+    item["studies"] = studies;
+    item["studyCounts"] = studyCounts;
+    item["diseaseStudyCounts"] = diseaseStudyCounts;
+}
+
 
 std::string getLabel(const Node& node) {
     std::string label = node.isARG ? getARGName(node.id) : getMGENameForLabel(node.id);
@@ -67,7 +117,8 @@ std::string getLabel(const Node& node) {
 
 bool exportGraphToJsonSimple(const Graph& g,
                              const std::string& outPathStr,
-                             const std::map<int, std::string>& patientToDiseaseMap)
+                             const std::map<int, std::string>& patientToDiseaseMap,
+                             const std::map<int, std::string>& patientToStudyMap)
 {
     json j;
     j["nodes"] = json::array();
@@ -89,37 +140,18 @@ bool exportGraphToJsonSimple(const Graph& g,
             processedColoEdges.insert(canon);
         }
 
-        json diseases = json::array();
-        json diseaseCounts = json::object();
-
-        std::map<std::string, int> diseaseCounter;
-
-        for (int patientID : edge.individuals) {
-            auto it = patientToDiseaseMap.find(patientID);
-            if (it != patientToDiseaseMap.end()) {
-                diseaseCounter[it->second]++;
-            }
-        }
-
-        for (const auto& [diseaseName, count] : diseaseCounter) {
-            diseases.push_back(diseaseName);
-            diseaseCounts[diseaseName] = count;
-        }
-
-        j["links"].push_back({
+        json link = {
             {"source", getNodeName(edge.source)},
             {"target", getNodeName(edge.target)},
 
-            // counts/filters
-            {"individualCount", static_cast<int>(edge.individuals.size())},
             {"isColo", edge.isColo},
-            {"diseases", diseases},
-            {"diseaseCounts", diseaseCounts},
 
             // timepoints for fast temporal styling in JS
             {"sourceTimepoint", static_cast<int>(edge.source.timepoint)},
             {"targetTimepoint", static_cast<int>(edge.target.timepoint)}
-        });
+        };
+        addPatientSupportFields(link, edge.individuals, patientToDiseaseMap, patientToStudyMap);
+        j["links"].push_back(link);
     }
 
     for (const Node& n : active_nodes) {
@@ -158,6 +190,7 @@ bool exportGraphToJsonSimple(const Graph& g,
 bool exportParentGraphToJson(const Graph& g,
                              const std::string& outPathStr,
                              const std::map<int, std::string>& patientToDiseaseMap,
+                             const std::map<int, std::string>& patientToStudyMap,
                              bool showLabels)
 {
     json j;
@@ -179,7 +212,7 @@ bool exportParentGraphToJson(const Graph& g,
     std::map<std::tuple<int,int,Timepoint>, std::string> mgeGroupByKey;
     std::map<std::tuple<int,int,Timepoint>, std::string> argResistanceByKey;
     std::map<std::tuple<int,int,Timepoint>, std::string> argGroupByKey;
-    std::map<std::tuple<int,int,Timepoint>, std::map<std::string, std::set<int>>> diseaseToPatientsByKey;
+    std::map<std::tuple<int,int,Timepoint>, std::set<int>> patientsByKey;
     std::map< std::tuple<int,int,Timepoint,Timepoint>, std::map<std::string, std::set<int>>> temporalDiseaseToPatients;
 
     // patient -> (arg,mge) -> set<tp>
@@ -219,11 +252,7 @@ bool exportParentGraphToJson(const Graph& g,
                         : "";
                 }
 
-                // diseaseCounts: count unique patients per disease at this (arg,mge,tp)
-                auto itDis = patientToDiseaseMap.find(patientID);
-                if (itDis != patientToDiseaseMap.end()) {
-                    diseaseToPatientsByKey[key][itDis->second].insert(patientID);
-                }
+                patientsByKey[key].insert(patientID);
             }
         }
     }
@@ -234,15 +263,7 @@ bool exportParentGraphToJson(const Graph& g,
         const int mgeId = std::get<1>(key);
         const Timepoint tp = std::get<2>(key);
 
-        json diseaseCounts = json::object();
-        auto itCounts = diseaseToPatientsByKey.find(key);
-        if (itCounts != diseaseToPatientsByKey.end()) {
-            for (const auto& [diseaseName, patients] : itCounts->second) {
-                diseaseCounts[diseaseName] = static_cast<int>(patients.size());
-            }
-        }
-
-        j["nodes"].push_back({
+        json node = {
             {"id", parentName},
             {"label", labelByKey[key]},
             {"argId", argId},
@@ -250,9 +271,10 @@ bool exportParentGraphToJson(const Graph& g,
             {"timepoint", tpJson(tp)},   // numeric, safe
             {"mgeGroup", mgeGroupByKey[key]},
             {"argResistance", argResistanceByKey[key]},
-            {"argGroup", argGroupByKey[key]},
-            {"diseaseCounts", diseaseCounts}
-        });
+            {"argGroup", argGroupByKey[key]}
+        };
+        addPatientSupportFields(node, patientsByKey[key], patientToDiseaseMap, patientToStudyMap);
+        j["nodes"].push_back(node);
     }
 
         // ------------------------------------------------------------------
@@ -265,6 +287,7 @@ bool exportParentGraphToJson(const Graph& g,
         };
 
         for (const auto& [patientID, pairMap] : nodesByPatient) {
+            const int currentPatientID = patientID;
             auto itDis = patientToDiseaseMap.find(patientID);
             const bool hasDisease = (itDis != patientToDiseaseMap.end());
             const std::string diseaseName = hasDisease ? itDis->second : "";
@@ -290,7 +313,7 @@ bool exportParentGraphToJson(const Graph& g,
 
                 auto addTemporalSupport = [&](Timepoint srcTp, Timepoint tgtTp) {
                     if (!hasDisease) return;
-                    temporalDiseaseToPatients[{argId, mgeId, srcTp, tgtTp}][diseaseName].insert(patientID);
+                    temporalDiseaseToPatients[{argId, mgeId, srcTp, tgtTp}][diseaseName].insert(currentPatientID);
                 };
 
                 // Donor -> Pre OR Donor -> firstPost (if Pre missing)
@@ -339,26 +362,22 @@ bool exportParentGraphToJson(const Graph& g,
             if (emittedTemporal.count(dk)) continue;
             emittedTemporal.insert(dk);
 
-            json diseases = json::array();
-            json diseaseCounts = json::object();
-            int individualCount = 0;
-
-            for (const auto& [diseaseName, patients] : diseaseMap) {
-                diseases.push_back(diseaseName);
-                diseaseCounts[diseaseName] = static_cast<int>(patients.size());
-                individualCount += static_cast<int>(patients.size());
+            std::set<int> supportPatients;
+            for (const auto& [diseaseName, diseasePatients] : diseaseMap) {
+                for (int patientID : diseasePatients) {
+                    supportPatients.insert(patientID);
+                }
             }
 
-            j["links"].push_back({
+            json link = {
                 {"source", sName},
                 {"target", tName},
                 {"isColo", false},
-                {"individualCount", individualCount},
-                {"diseases", diseases},
-                {"diseaseCounts", diseaseCounts},
                 {"sourceTimepoint", tpJson(srcTp)},
                 {"targetTimepoint", tpJson(tgtTp)}
-            });
+            };
+            addPatientSupportFields(link, supportPatients, patientToDiseaseMap, patientToStudyMap);
+            j["links"].push_back(link);
         }
 
         // ------------------------------------------------------------------
@@ -451,9 +470,10 @@ bool exportParentGraphToJson(const Graph& g,
 void exportColocalizationsToJSONByDisease(
     const std::map<std::tuple<int,int,int>, std::set<Timepoint>>& colocalizationByIndividual,
     const std::map<int, std::string>& patientToDiseaseMap,
+    const std::map<int, std::string>& patientToStudyMap,
     const std::string& jsonOutputPath  // path to the final JSON file
 ) {
-    std::map<std::string, std::map<std::string, std::map<std::string, int>>> diseaseColocCounts;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::set<int>>>> diseaseColocPatients;
 
     // Store metadata for each pair so we can export it later
     std::map<std::string, std::string> pairToArgResistanceGroup;
@@ -465,7 +485,11 @@ void exportColocalizationsToJSONByDisease(
         const int patientID = std::get<0>(tuple);
         const int argID     = std::get<1>(tuple);
         const int mgeID     = std::get<2>(tuple);
-        std::string disease = patientToDiseaseMap.at(patientID);
+        std::string disease = "Unknown";
+        auto diseaseIt = patientToDiseaseMap.find(patientID);
+        if (diseaseIt != patientToDiseaseMap.end()) {
+            disease = diseaseIt->second;
+        }
 
         bool hasDonor = std::any_of(tps.begin(), tps.end(), [](const Timepoint& tp){ return isDonor(tp); });
         bool hasPre   = std::any_of(tps.begin(), tps.end(), [](const Timepoint& tp){ return isPreFMT(tp); });
@@ -480,7 +504,7 @@ void exportColocalizationsToJSONByDisease(
         else continue; // skip other patterns
 
         std::string pairName = getARGName(argID) + "–" + getMGEName(mgeID);
-        diseaseColocCounts[disease][pairName][status]++;
+        diseaseColocPatients[disease][pairName][status].insert(patientID);
         // Record metadata once per pair
         pairToArgResistanceGroup[pairName] = getARGGroupName(argID);
         pairToArgResistance[pairName] = getARGResistance(argID);
@@ -490,19 +514,21 @@ void exportColocalizationsToJSONByDisease(
     // Build JSON structure
     json rootJson = json::object();  // use object instead of array
 
-    for (const auto& [disease, colocMap] : diseaseColocCounts) {
+    for (const auto& [disease, colocMap] : diseaseColocPatients) {
         json diseaseArray = json::array();
 
         for (const auto& [pair, statusMap] : colocMap) {
-            for (const auto& [status, count] : statusMap) {
-                diseaseArray.push_back({
+            for (const auto& [status, patients] : statusMap) {
+                json entry = {
                     {"colocalization", pair},
                     {"argResistance", pairToArgResistanceGroup[pair]},
                     {"argResistanceMap", pairToArgResistance[pair]},
                     {"mgeGroup", pairToMgeGroup[pair]},
-                    {"status", status},
-                    {"patients", count}
-                });
+                    {"status", status}
+                };
+                addPatientSupportFields(entry, patients, patientToDiseaseMap, patientToStudyMap);
+                entry["patients"] = entry["individualCount"];
+                diseaseArray.push_back(entry);
             }
         }
 

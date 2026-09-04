@@ -324,6 +324,7 @@ void writeTemporalDynamicsCountsForDisease(
         rows.push_back({
             getARGName(argID),
             getMGEName(mgeID),
+            getMGEGroupName(mgeID),
             std::to_string(donor),
             std::to_string(pre),
             std::to_string(post),
@@ -332,7 +333,7 @@ void writeTemporalDynamicsCountsForDisease(
     }
 
     writeCSV("docs/output/disease_type/" + disease + ".csv",
-        {"ARG_ID","MGE_ID","Donor","Pre","Post","PatientCount"},
+        {"ARG_ID","MGE_ID","MGE_Group","Donor","Pre","Post","PatientCount"},
         rows);
 }
 
@@ -657,7 +658,7 @@ void writeDetailedCSV(
         file.open(filename, std::ios::app);
     } else {
         file.open(filename);
-        file << "ARG_Name,MGE_Name,Patient_ID,Label\n"; 
+        file << "ARG_Name,MGE_Name,MGE_Group_Name,Patient_ID,Label\n"; 
     }
 
     for (const auto& [tuple, tps] : colocs) {
@@ -667,12 +668,15 @@ void writeDetailedCSV(
 
         std::string argName = getARGName(argId);
         std::string mgeName = getMGEName(mgeId);
+        std::string mgeGroupName = getMGEGroupName(mgeId);
 
         if (argName.empty()) argName = "Unknown_ARG_" + std::to_string(argId);
         if (mgeName.empty()) mgeName = "Unknown_MGE_" + std::to_string(mgeId);
+        if (mgeGroupName.empty()) mgeGroupName = "Unknown_MGE_Group_" + std::to_string(mgeId);
 
         file << argName << ","
              << mgeName << ","
+             << mgeGroupName << ","
              << patientId << "," 
              << label << "\n";
     }

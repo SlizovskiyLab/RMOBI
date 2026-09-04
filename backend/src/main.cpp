@@ -30,8 +30,9 @@ fs::path mge_group_output;
 
 
 int main() {
+    Config cfg;
     try {
-        Config cfg = loadConfig("backend/config/paths.json");
+        cfg = loadConfig("backend/config/paths.json");
         data_file = fs::path(cfg.input_data_path);
         interaction_json_path = fs::path(cfg.viz_interaction);
         parent_json_path = fs::path(cfg.viz_parent);
@@ -46,10 +47,14 @@ int main() {
     }
     Graph g;
     std::map<int, std::string> patientToDiseaseMap;
+    std::map<int, std::string> patientToStudyMap;
     std::unordered_map<Node, std::unordered_set<Node>> adjacency;
 
     // parse the data file and construct the graph (true to exclude ARGs requiring SNP confirmation, true to exclude metals)
     parseData(data_file, g, patientToDiseaseMap, true, false);
+    if (!cfg.patient_metadata_path.empty()) {
+        loadPatientMetadata(fs::path(cfg.patient_metadata_path), patientToDiseaseMap, patientToStudyMap);
+    }
 
     addTemporalEdges(g);  
     buildAdjacency(g, adjacency);
@@ -79,16 +84,14 @@ int main() {
     // /********************************* Graph Visualization *********************************/
 
     Graph rmobi = g;
-    exportGraphToJsonSimple(rmobi, interaction_json_path.string(), patientToDiseaseMap);
-    exportParentGraphToJson(rmobi, parent_json_path.string(), patientToDiseaseMap, true);
-    exportColocalizationsToJSONByDisease(colocalizationByIndividual, patientToDiseaseMap, temporal_dynamics_json_path.string());
+    exportGraphToJsonSimple(rmobi, interaction_json_path.string(), patientToDiseaseMap, patientToStudyMap);
+    exportParentGraphToJson(rmobi, parent_json_path.string(), patientToDiseaseMap, patientToStudyMap, true);
+    exportColocalizationsToJSONByDisease(colocalizationByIndividual, patientToDiseaseMap, patientToStudyMap, temporal_dynamics_json_path.string());
 
 
     return 0;
 
 }
-
-
 
 
 
