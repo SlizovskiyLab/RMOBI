@@ -1,8 +1,0 @@
-Data: pat
-Models:
-reduced_fit: cbind(n_Em, n_Dis) ~ cohort + log(k_post) + (1 | study), zi=~0, disp=~1
-fit: cbind(n_Em, n_Dis) ~ cohort + log(k_post) + log_num_contigs_z + , zi=~0, disp=~1
-fit:     log_total_length_z + log_non_host_length_z + (1 | study), zi=~0, disp=~1
-            Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
-reduced_fit  6 144.10 153.43 -66.049   132.10                         
-fit          9 147.63 161.63 -64.815   129.63 2.4682      3     0.4811

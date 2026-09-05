@@ -155,6 +155,9 @@ void loadPatientMetadata(const std::filesystem::path& filename,
 
     std::string line;
     bool isHeader = true;
+    std::size_t patientColumn = 0;
+    std::size_t diseaseColumn = 0;
+    std::size_t studyColumn = 0;
     while (std::getline(infile, line)) {
         if (!line.empty() && line.back() == '\r') {
             line.pop_back();
@@ -169,14 +172,26 @@ void loadPatientMetadata(const std::filesystem::path& filename,
         }
 
         if (isHeader) {
+            const auto findColumn = [&tokens](const std::string& name) {
+                const auto it = std::find(tokens.begin(), tokens.end(), name);
+                if (it == tokens.end()) {
+                    throw std::runtime_error("Missing required patient metadata column: " + name);
+                }
+                return static_cast<std::size_t>(std::distance(tokens.begin(), it));
+            };
+
+            patientColumn = findColumn("Patient");
+            diseaseColumn = findColumn("disease_type");
+            studyColumn = findColumn("study_data");
             isHeader = false;
             continue;
         }
-        if (tokens.size() < 3 || tokens[0].empty()) continue;
+        const std::size_t requiredColumn = std::max({patientColumn, diseaseColumn, studyColumn});
+        if (tokens.size() <= requiredColumn || tokens[patientColumn].empty()) continue;
 
-        int patientID = std::stoi(tokens[0]);
-        const std::string& diseaseType = tokens[1];
-        const std::string& studyID = tokens[2];
+        int patientID = std::stoi(tokens[patientColumn]);
+        const std::string& diseaseType = tokens[diseaseColumn];
+        const std::string& studyID = tokens[studyColumn];
 
         auto diseaseIt = patientToDiseaseMap.find(patientID);
         if (diseaseIt != patientToDiseaseMap.end() && diseaseIt->second != diseaseType) {
