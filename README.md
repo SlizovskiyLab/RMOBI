@@ -143,16 +143,20 @@ g++ -std=c++17 -Wall -Iinclude -Ithird_party backend/src/*.cpp -o rmobi.exe
 
 
 ### Run Visualization Tool Locally
-Step 1: cd docs
 
-Step 2: python3 -m http.server 8080
- 
-http://localhost:8080/index.html
+From the project root, run:
+
+```bash
+python3 -m http.server 8080 --directory docs
+```
+
+Then open [http://localhost:8080/](http://localhost:8080/). The server uses
+`docs/index.html` as its home page, so the RMOBI website is shown instead of a
+directory listing of the repository.
 
 
 ###  Generate plots
 1: cd analysis_scripts 
 
 2: python3 run_all_analysis.py 
-
 
