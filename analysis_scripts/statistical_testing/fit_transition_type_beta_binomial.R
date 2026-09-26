@@ -72,16 +72,26 @@ for (transition_type in transition_types) {
 }
 
 result_table <- do.call(rbind, results)
+result_table$BH_p_across_four <- ave(result_table$p.value, result_table$contrast,
+                                     FUN = function(x) p.adjust(x, method = "BH"))
 result_table$holm_p_across_four <- ave(result_table$p.value, result_table$contrast,
                                        FUN = function(x) p.adjust(x, method = "holm"))
-result_table <- result_table[, c(
+bh_results <- result_table[, c(
+  "transition", "contrast", "odds.ratio", "asymp.LCL", "asymp.UCL",
+  "p.value", "BH_p_across_four"
+)]
+holm_results <- result_table[, c(
   "transition", "contrast", "odds.ratio", "asymp.LCL", "asymp.UCL",
   "p.value", "holm_p_across_four"
 )]
 
-write.csv(result_table, file.path(output_dir, "transition_model_results.csv"), row.names = FALSE)
+write.csv(bh_results, file.path(output_dir, "transition_model_results_bh.csv"), row.names = FALSE)
+write.csv(holm_results, file.path(output_dir, "transition_model_results_holm.csv"), row.names = FALSE)
 write.csv(do.call(rbind, study_sd), file.path(output_dir, "transition_study_sd.csv"), row.names = FALSE)
 write.csv(do.call(rbind, diagnostics), file.path(output_dir, "transition_model_diagnostics.csv"), row.names = FALSE)
 write.csv(do.call(rbind, fit_statistics), file.path(output_dir, "transition_model_fit_statistics.csv"), row.names = FALSE)
 saveRDS(fits, file.path(output_dir, "transition_models.rds"))
-print(result_table)
+cat("\nBENJAMINI-HOCHBERG-ADJUSTED TRANSITION RESULTS\n")
+print(bh_results, row.names = FALSE)
+cat("\nHOLM-ADJUSTED TRANSITION RESULTS\n")
+print(holm_results, row.names = FALSE)

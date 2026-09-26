@@ -1,0 +1,3 @@
+"Patient","cohort","study","n_Em","n_Dis","k_post","median_recipient_num_contigs","median_recipient_total_length","median_recipient_non_host_length","k_post_detected","k_post_source","log_num_contigs_z","log_total_length_z","log_non_host_length_z"
+13,"rCDI","VermaS_2021",0,0,3,271691,206985669,3341500129.5,0,"meta_data:count_unique_PostFMT_samples",1.3925898097825,0.694800333817848,-0.0964950167843145
+35,"Melanoma","Davar_et_al_2021",0,0,3,84823.5,92812248,1746259240.5,0,"meta_data:count_unique_PostFMT_samples",-0.663207125446275,-0.808118964672886,-0.778486484620435

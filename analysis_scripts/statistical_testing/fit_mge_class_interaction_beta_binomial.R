@@ -94,16 +94,33 @@ candidate_comparison$comparison <- c(
 cell_estimates <- as.data.frame(summary(
   emmeans(full, ~ cohort * MGE_class), infer = c(TRUE, FALSE), type = "response"
 ))
-posthoc_emm <- emmeans(full, ~ cohort | MGE_class)
-posthoc <- contrast(posthoc_emm, method = list(
-  "MDRB vs rCDI" = c(-1, 1, 0),
-  "Melanoma vs rCDI" = c(-1, 0, 1)
-), adjust = "none")
-posthoc_results <- as.data.frame(summary(
-  posthoc, infer = c(TRUE, TRUE), type = "response", adjust = "none"
+get_posthoc <- function(model, model_name) {
+  emm <- emmeans(model, ~ cohort | MGE_class)
+  contrasts <- contrast(emm, method = list(
+    "MDRB vs rCDI" = c(-1, 1, 0),
+    "Melanoma vs rCDI" = c(-1, 0, 1)
+  ), adjust = "none")
+  result <- as.data.frame(summary(
+    contrasts, infer = c(TRUE, TRUE), type = "response", adjust = "none"
+  ))
+  result$model <- model_name
+  result$BH_p_across_8 <- p.adjust(result$p.value, method = "BH")
+  result$significant_BH_0.05 <- result$BH_p_across_8 < 0.05
+  result$Holm_p_across_8 <- p.adjust(result$p.value, method = "holm")
+  result$significant_Holm_0.05 <- result$Holm_p_across_8 < 0.05
+  result
+}
+posthoc_results <- do.call(rbind, list(
+  get_posthoc(reduced, "reduced"),
+  get_posthoc(parsimonious, "parsimonious"),
+  get_posthoc(full, "full")
 ))
-posthoc_results$holm_p_across_8 <- p.adjust(posthoc_results$p.value, method = "holm")
-posthoc_results$significant_holm_0.05 <- posthoc_results$holm_p_across_8 < 0.05
+bh_results <- posthoc_results[setdiff(
+  names(posthoc_results), c("Holm_p_across_8", "significant_Holm_0.05")
+)]
+holm_results <- posthoc_results[setdiff(
+  names(posthoc_results), c("BH_p_across_8", "significant_BH_0.05")
+)]
 fixed_effects <- as.data.frame(summary(full)$coefficients$cond)
 fixed_effects$term <- rownames(fixed_effects)
 rownames(fixed_effects) <- NULL
@@ -130,8 +147,10 @@ capture.output({
   cat("\nTHREE-MODEL ASSEMBLY-COVARIATE COMPARISON\n")
   print(candidate_comparison, row.names = FALSE)
   cat("\nRANDOM-EFFECT SDs\n"); print(random_effects, row.names = FALSE)
-  cat("\nPOST-HOC COHORT COMPARISONS WITHIN MGE CLASS\n")
-  print(posthoc_results, row.names = FALSE)
+  cat("\nPOST-HOC COHORT COMPARISONS: BENJAMINI-HOCHBERG\n")
+  print(bh_results, row.names = FALSE)
+  cat("\nPOST-HOC COHORT COMPARISONS: HOLM\n")
+  print(holm_results, row.names = FALSE)
   cat("\nDIAGNOSTICS\n"); print(diagnostics, row.names = FALSE)
 }, file = file.path(output_dir, "mge_class_interaction_model_summary.txt"))
 
@@ -140,7 +159,10 @@ write.csv(candidate_comparison,
           file.path(output_dir, "assembly_covariate_model_comparison.csv"), row.names = FALSE)
 write.csv(fixed_effects, file.path(output_dir, "full_model_fixed_effects.csv"), row.names = FALSE)
 write.csv(cell_estimates, file.path(output_dir, "cohort_mge_class_estimated_probabilities.csv"), row.names = FALSE)
-write.csv(posthoc_results, file.path(output_dir, "within_mge_class_cohort_contrasts_holm.csv"), row.names = FALSE)
+write.csv(bh_results,
+          file.path(output_dir, "all_models_within_mge_class_contrasts_bh.csv"), row.names = FALSE)
+write.csv(holm_results,
+          file.path(output_dir, "all_models_within_mge_class_contrasts_holm.csv"), row.names = FALSE)
 write.csv(random_effects, file.path(output_dir, "random_effect_sds.csv"), row.names = FALSE)
 write.csv(diagnostics, file.path(output_dir, "model_diagnostics.csv"), row.names = FALSE)
 saveRDS(
@@ -184,3 +206,7 @@ svg(file.path(output_dir, "adjusted_emergence_probability_by_cohort_mge.svg"),
 draw_probability_plot(); dev.off()
 print(interaction_test)
 print(diagnostics)
+cat("\nBENJAMINI-HOCHBERG-ADJUSTED POST-HOC RESULTS\n")
+print(bh_results, row.names = FALSE)
+cat("\nHOLM-ADJUSTED POST-HOC RESULTS\n")
+print(holm_results, row.names = FALSE)

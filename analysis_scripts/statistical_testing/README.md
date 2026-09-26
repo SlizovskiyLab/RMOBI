@@ -25,9 +25,8 @@ It then runs the R analyses in below order:
 4. the leave-one-study-out analysis;
 5. the Model 1 figures.
 
-This shell script is preferable to separate Python and R runners because there is one entry point
-and one enforced dependency order, while Python still never invokes R. The individual commands
-below remain available when only one analysis needs to be rerun.
+
+The individual commands below remain available when only one analysis needs to be rerun.
 
 ## 1. Run Python
 
@@ -65,7 +64,7 @@ From the repository root:
 Rscript "analysis_scripts/statistical_testing/fit_emergence_disappearance_beta_binomial.R"
 ```
 
-# Model 2: Emergence-to-dissappearance balance
+# Model 1: Emergence-to-dissappearance balance
 The default fitted model is:
 
 ```r
@@ -77,24 +76,10 @@ glmmTMB(cbind(n_Em, n_Dis) ~ cohort + log(k_post) +
 ```
 `log(k_post)` and both patient-level assembly metrics are always included in Model 1.
 
-Model 1 has one aggregated row per patient, so `(1 | Patient)` is not identifiable separately
-from beta-binomial dispersion. In a diagnostic fit its SD collapsed to approximately zero and
-its addition worsened both AIC and BIC; it is therefore not included. A patient random intercept
-is appropriate in Model 4, where each patient contributes multiple MGE-class rows.
 
-A zero-inflated beta-binomial candidate (`ziformula = ~1`) was also checked. It had the same
-log-likelihood as the non-zero-inflated model, an effectively absent zero-inflation component,
-and worse AIC/BIC. The primary model therefore explicitly uses `ziformula = ~0`. This cannot
-make rows with `n_Em + n_Dis == 0` valid binomial observations; those rows remain excluded.
-
-The script tests the primary model with `DHARMa::testZeroInflation(..., alternative = "greater")`.
-Only if this test detects excess zero-emergence outcomes at `p < 0.05` does it fit a secondary
-`ziformula = ~1` candidate and export its AIC/BIC comparison. The primary fitted object and
-reported cohort contrasts always come from `ziformula = ~0`.
 
 The full, reduced, and parsimonious models all use maximum likelihood (`REML = FALSE`), allowing
 the nested likelihood-ratio, AIC, and BIC comparisons to use the fitted model objects directly.
-
 
 The script also fits a nested reduced sensitivity model excluding `log_num_contigs_z`,
 `log_total_length_z`, and `log_non_host_length_z`. It exports `anova(reduced_fit, fit)` as their joint likelihood-ratio test and a table of both models' log-likelihood, AIC, BIC, and convergence diagnostics. The full
@@ -109,6 +94,11 @@ R excludes and lists patients with `n_Em + n_Dis == 0`, because a binomial respo
 trials for those rows. It reports Holm-adjusted odds ratios and 95% confidence intervals for
 MDRB versus rCDI and melanoma versus rCDI, the study random-intercept SD, convergence
 diagnostics, the model summary, and a serialized model.
+
+For each of the reduced, parsimonious, and full Model 1 fits, the two planned cohort contrasts
+are corrected separately using Benjamini-Hochberg and Holm. Results are printed and exported
+to `all_models_cohort_contrasts_bh.csv` and `all_models_cohort_contrasts_holm.csv`. The all-ARG
+and clinically relevant ARG analyses are treated as separate analysis families.
 
 
 # Model 2: PR, DR, ER and transfer
@@ -126,8 +116,9 @@ Rscript analysis_scripts/statistical_testing/fit_transition_type_beta_binomial.R
 ```
 
 Each model uses `n_total = persistence + disappearance + emergence + transfer`. The transfer
-CSV is restricted to patients with a donor sample in `data/meta_data.csv`. Holm correction is
-applied across the four transition models separately for each cohort contrast.
+CSV is restricted to patients with a donor sample in `data/meta_data.csv`. Benjamini--Hochberg
+and Holm corrections are applied separately across the four transition models for each cohort
+contrast, then printed and exported to separate files.
 
 For each transition, R writes a complete `<transition>_model_summary.txt` with fixed effects,
 beta-binomial dispersion, random-effect variance/SD, convergence information, and model-fit
@@ -157,8 +148,10 @@ the primary test remains specifically `cohort × MGE_class = 0`. MGE classes abs
 more cohorts are excluded because their cohort interactions cannot be estimated. ICE rows are
 excluded before all Model 3 fits and written to `excluded_ice_rows.csv` for audit. Results are
 saved under `output/model_3`.
-Post-hoc `emmeans` comparisons test MDRB vs rCDI and melanoma vs rCDI within each of the four
-retained non-ICE MGE classes; their p-values are Holm-corrected together across all eight comparisons.
+For each of the reduced, parsimonious, and full models, post-hoc `emmeans` comparisons test
+MDRB vs rCDI and melanoma vs rCDI within each of the four retained non-ICE MGE classes.
+Benjamini-Hochberg and Holm corrections are each applied separately across the eight contrasts
+within a model and are printed and exported as separate result tables.
 The adjusted emergence-probability plot shows response-scale `emmeans` and 95% CIs for rCDI,
 MDRB, and melanoma within each MGE class, omitting sparse ICE estimates.
 

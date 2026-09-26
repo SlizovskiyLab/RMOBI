@@ -6,7 +6,6 @@ This script exports patient- and event-level CSV files for the R analysis.
 from __future__ import annotations
 
 import argparse
-import csv
 import importlib.util
 import re
 from pathlib import Path
@@ -135,35 +134,24 @@ def build_events(source: pd.DataFrame, transition) -> pd.DataFrame:
     return events.sort_values(["Patient", "event", "MEGARes group", "MGE gene"])
 
 
-# def export_clinically_relevant_patients(
-#     source: pd.DataFrame,
-#     metadata: pd.DataFrame,
-#     sample_metadata: pd.DataFrame,
-#     clinical_arg_path: Path,
-#     transition,
-# ) -> None:
-#     """Export Model 1 input restricted to clinically relevant ARG groups."""
-#     clinical = pd.read_csv(clinical_arg_path)
-#     if "Group" not in clinical.columns:
-#         raise ValueError(f"{clinical_arg_path} must contain a 'Group' column.")
-#     if "MEGARes group" not in source.columns:
-#         raise ValueError("Model source must contain a 'MEGARes group' column.")
-#     clinical_groups = set(clinical["Group"].dropna().astype(str).str.strip().str.upper())
-#     clinical_source = source.loc[
-#         source["MEGARes group"].astype(str).str.strip().str.upper().isin(clinical_groups)
-#     ].copy()
-#     clinical_events = build_events(clinical_source, transition)
-#     clinical_patients = build_patients(
-#         clinical_source, metadata, clinical_events, sample_metadata, transition
-#     )
-#     CLINICAL_MODEL_1_OUTPUT.mkdir(parents=True, exist_ok=True)
-#     clinical_patients.to_csv(
-#         CLINICAL_MODEL_1_OUTPUT / "emergence_disappearance_patients.csv", index=False
-#     )
-#     print(
-#         f"Wrote {len(clinical_patients)} clinically relevant ARG patients to "
-#         f"{CLINICAL_MODEL_1_OUTPUT / 'emergence_disappearance_patients.csv'}"
-#     )
+def export_clinically_relevant_patients(
+    source: pd.DataFrame, metadata: pd.DataFrame, sample_metadata: pd.DataFrame,
+    clinical_arg_path: Path, transition,
+) -> None:
+    """Export Model 1 input restricted to clinically relevant ARG groups."""
+    clinical = pd.read_csv(clinical_arg_path)
+    clinical_groups = set(clinical["Group"].dropna().astype(str).str.strip().str.upper())
+    clinical_source = source.loc[
+        source["MEGARes group"].astype(str).str.strip().str.upper().isin(clinical_groups)
+    ].copy()
+    clinical_events = build_events(clinical_source, transition)
+    clinical_patients = build_patients(
+        clinical_source, metadata, clinical_events, sample_metadata, transition
+    )
+    CLINICAL_MODEL_1_OUTPUT.mkdir(parents=True, exist_ok=True)
+    clinical_patients.to_csv(
+        CLINICAL_MODEL_1_OUTPUT / "emergence_disappearance_patients.csv", index=False
+    )
 
 
 def build_patients(source: pd.DataFrame, metadata: pd.DataFrame, events: pd.DataFrame,
@@ -266,16 +254,13 @@ def export_model_2(source: pd.DataFrame, metadata: pd.DataFrame,
         )
 
 def read_detailed_transition(path: Path) -> pd.DataFrame:
-    rows = []
-    with path.open(newline="", encoding="utf-8") as handle:
-        header = next(csv.reader(handle))
-        group_index = header.index("MGE_Group_Name")
-        patient_index = header.index("Patient_ID")
-        for fields in csv.reader(handle):
-            if len(fields) <= max(group_index, patient_index):
-                raise ValueError(f"Malformed row in {path}: {fields}")
-            rows.append({"MGE_Group_Name": fields[group_index], "patient": fields[patient_index]})
-    return pd.DataFrame(rows)
+    data = pd.read_csv(path)
+    if "MGE_Group_Name" in data:
+        groups = data["MGE_Group_Name"]
+    else:
+        codes = data["MGE_Name"].str.split(":").str[1]
+        groups = codes.replace({"proph": "prophage", "vir": "virus", "is": "likely IS/TE"})
+    return pd.DataFrame({"MGE_Group_Name": groups, "patient": data["Patient_ID"]})
 
 
 def export_model_3(metadata: pd.DataFrame, sample_metadata: pd.DataFrame) -> None:
@@ -341,9 +326,9 @@ def main() -> None:
     patients = build_patients(source, metadata, events, sample_metadata, transition)
     events.to_csv(args.output_dir / "emergence_disappearance_events.csv", index=False)
     patients.to_csv(args.output_dir / "emergence_disappearance_patients.csv", index=False)
-    # export_clinically_relevant_patients(
-    #     source, metadata, sample_metadata, args.clinical_arg_list, transition
-    # )
+    export_clinically_relevant_patients(
+        source, metadata, sample_metadata, args.clinical_arg_list, transition
+    )
     export_model_2(source, metadata, sample_metadata, transition)
     export_model_3(metadata, sample_metadata)
     extract_data_for_loso(INPUT, OUTPUT_DIR, OUTPUT)

@@ -1016,6 +1016,10 @@ function updateVisualization(data) {
     const [cx, cy] = getCenter();
     
     showGraphLoadingBanner();
+    const stabilizationStartedAt = performance.now();
+    const stabilizedGraphKey = currentGraphKey;
+    let stabilizationTickCount = 0;
+
     // --- simulation ---
     const sim = d3.forceSimulation(simNodes)
       .force("link", d3.forceLink(simLinks).id(d => d.id).distance(d => d.isColo ? 40 : 60))
@@ -1032,8 +1036,20 @@ function updateVisualization(data) {
       .alphaMin(0.02)
       .alphaDecay(0.08)
       // .velocityDecay(0.5)
-      .on("tick", ticked)
+      .on("tick", () => {
+        stabilizationTickCount += 1;
+        ticked();
+      })
       .on("end", () => {
+        const elapsedMs = performance.now() - stabilizationStartedAt;
+        console.log("[RMOBI] Complete graph stabilized", {
+          graph: stabilizedGraphKey,
+          nodes: simNodes.length,
+          links: simLinks.length,
+          ticks: stabilizationTickCount,
+          milliseconds: Number(elapsedMs.toFixed(1)),
+          seconds: Number((elapsedMs / 1000).toFixed(3))
+        });
         hideGraphLoadingBanner();
       });
 

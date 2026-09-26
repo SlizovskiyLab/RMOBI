@@ -165,15 +165,36 @@ if (zero_diagnostic$excess_zeros_detected) {
 }
 write.csv(model_comparison, file.path(output_dir, "zero_inflation_model_comparison.csv"), row.names = FALSE)
 
-# Compute odds ratios for cohort comparisons using emmeans and contrasts, then save the results.
-emm <- emmeans(fit, ~ cohort)
-planned <- contrast(
-  emm,
-  method = list("MDRB vs rCDI" = c(-1, 1, 0), "Melanoma vs rCDI" = c(-1, 0, 1)),
-  adjust = "holm"
-)
-or_table <- as.data.frame(summary(planned, infer = c(TRUE, TRUE), type = "response"))
-write.csv(or_table, file.path(output_dir, "cohort_odds_ratios_holm.csv"), row.names = FALSE)
+# Compute the two planned cohort contrasts for all three candidate models.
+get_cohort_contrasts <- function(model, model_name) {
+  planned <- contrast(
+    emmeans(model, ~ cohort),
+    method = list("MDRB vs rCDI" = c(-1, 1, 0), "Melanoma vs rCDI" = c(-1, 0, 1)),
+    adjust = "none"
+  )
+  result <- as.data.frame(summary(
+    planned, infer = c(TRUE, TRUE), type = "response", adjust = "none"
+  ))
+  result$model <- model_name
+  result$BH_p_across_2 <- p.adjust(result$p.value, method = "BH")
+  result$significant_BH_0.05 <- result$BH_p_across_2 < 0.05
+  result$Holm_p_across_2 <- p.adjust(result$p.value, method = "holm")
+  result$significant_Holm_0.05 <- result$Holm_p_across_2 < 0.05
+  result
+}
+contrast_results <- do.call(rbind, list(
+  get_cohort_contrasts(reduced_fit, "reduced"),
+  get_cohort_contrasts(m_parsimonious, "parsimonious"),
+  get_cohort_contrasts(fit, "full")
+))
+bh_results <- contrast_results[setdiff(
+  names(contrast_results), c("Holm_p_across_2", "significant_Holm_0.05")
+)]
+holm_results <- contrast_results[setdiff(
+  names(contrast_results), c("BH_p_across_2", "significant_BH_0.05")
+)]
+write.csv(bh_results, file.path(output_dir, "all_models_cohort_contrasts_bh.csv"), row.names = FALSE)
+write.csv(holm_results, file.path(output_dir, "all_models_cohort_contrasts_holm.csv"), row.names = FALSE)
 
 # Extract the study random-intercept standard deviation from the fitted model and save it.
 variance_components <- VarCorr(fit)
@@ -216,7 +237,10 @@ assembly_effect$OR_95CI_low <- exp(assembly_effect$Estimate - qnorm(0.975) * ass
 assembly_effect$OR_95CI_high <- exp(assembly_effect$Estimate + qnorm(0.975) * assembly_effect$`Std. Error`)
 write.csv(assembly_effect, file.path(output_dir, "assembly_covariate_effects.csv"), row.names = FALSE)
 
-print(or_table)
+cat("\nBENJAMINI-HOCHBERG-ADJUSTED COHORT CONTRASTS\n")
+print(bh_results, row.names = FALSE)
+cat("\nHOLM-ADJUSTED COHORT CONTRASTS\n")
+print(holm_results, row.names = FALSE)
 print(study_sd)
 print(diagnostics)
 print(assembly_effect)
