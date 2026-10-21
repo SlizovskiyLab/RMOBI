@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use RMOBI in your research, please cite this software."
+title: "RMOBI: a Network Framework for Tracking Resistome-Mobilome Colocalization Across Fecal Microbiota Transplantation Cohorts"
+type: software
+
+authors:
+  - family-names: "De Silva"
+    given-names: "Nihara"
+
+  - family-names: "Andhavarapu"
+    given-names: "Sakesh"
+
+repository-code: "https://github.com/SlizovskiyLab/RMOBI"
+url: "https://slizovskiylab.github.io/RMOBI/"
+license: "GPL-3.0"

@@ -1,6 +1,7 @@
 # Emergence/disappearance beta-binomial mixed model
 
 Python constructs and checks the CSVs; R fits the model. Neither script invokes the other.
+Statistical analyses were performed using **R (version 4.5.0)** with the following packages: `glmmTMB` (version 1.1.14), `emmeans` (version 2.0.4), and `DHARMa` (version 0.5.0).
 
 ## Run all statistical-testing and cross study assessment analysis
 
