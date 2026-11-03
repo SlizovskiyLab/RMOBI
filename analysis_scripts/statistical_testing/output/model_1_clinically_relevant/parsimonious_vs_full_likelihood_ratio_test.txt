@@ -1,9 +1,0 @@
-Data: pat
-Models:
-m_parsimonious: cbind(n_Em, n_Dis) ~ cohort + log(k_post) + log_non_host_length_z + , zi=~0, disp=~1
-m_parsimonious:     (1 | study), zi=~0, disp=~1
-fit: cbind(n_Em, n_Dis) ~ cohort + log(k_post) + log_num_contigs_z + , zi=~0, disp=~1
-fit:     log_total_length_z + log_non_host_length_z + (1 | study), zi=~0, disp=~1
-               Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
-m_parsimonious  7 146.02 156.91 -66.009   132.02                         
-fit             9 147.63 161.63 -64.815   129.63 2.3884      2     0.3029

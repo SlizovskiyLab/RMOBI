@@ -1,8 +1,0 @@
-
-	DHARMa zero-inflation test via comparison to expected zeros with
-	simulation under H0 = fitted model
-
-data:  simulationOutput
-ratioObsSim = 0.90785, p-value = 0.692
-alternative hypothesis: greater
-

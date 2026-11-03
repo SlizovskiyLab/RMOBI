@@ -1,3 +1,0 @@
-"model","parameters","log_likelihood","AIC","BIC","convergence_code","positive_definite_hessian"
-"Reduced: cohort + log(k_post) + (1|study)",6,-190.25224065797,392.504481315939,404.762788922947,0,TRUE
-"Full: reduced + assembly covariates",9,-187.920209627109,393.840419254218,412.227880664729,0,TRUE

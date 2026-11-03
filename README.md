@@ -52,6 +52,7 @@ See the [`LICENSE`](LICENSE) file for the full license text.
 The repository is organized into the following major folders:
 
 - `analysis_scripts/`: Python scripts used to generate manuscript figures and summary plots (upset plots, transition rates, grouped bars, nested donuts, stacked charts, pie charts, and heatmaps), with outputs saved under `analysis_scripts/images/`.
+Python version 3.8.0 was used with the following libraries: pandas (version 2.0.3), numpy (version 1.24.3), seaborn (version 0.13.2), and matplotlib (version 3.7.4).
 - `backend/`: Core C++ implementation for parsing inputs, building ARG-MGE temporal networks, running analyses, and exporting outputs (includes `src/`, `include/`, `scripts/`, and build artifacts).
 - `config/`: Runtime configuration files such as path mappings used by the backend pipeline.
 - `data/`: Input datasets and reference tables used for graph construction and downstream analyses.
