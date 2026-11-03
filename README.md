@@ -67,10 +67,7 @@ The repository is organized into the following major folders:
 
 ### Prerequisites
 
-C++17 or later
-Make (for build automation)
-Standard C++ libraries (<iostream>, <fstream>, <map>, <vector>, etc.)
-JSON library (e.g., nlohmann/json)
+C++17 or later, Make (for build automation), Standard C++ libraries (`<iostream>, <fstream>, <map>, <vector>, etc.`), JSON library (e.g., nlohmann/json)
 
 ## Clone the repository
 git clone https://github.com/SlizovskiyLab/RMOBI.git
