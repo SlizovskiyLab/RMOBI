@@ -51,8 +51,6 @@ See the [`LICENSE`](LICENSE) file for the full license text.
 
 The repository is organized into the following major folders:
 
-- `analysis_scripts/`: Python scripts used to generate manuscript figures and summary plots (upset plots, transition rates, grouped bars, nested donuts, stacked charts, pie charts, and heatmaps), with outputs saved under `analysis_scripts/images/`.
-Python version 3.8.0 was used with the following libraries: pandas (version 2.0.3), numpy (version 1.24.3), seaborn (version 0.13.2), and matplotlib (version 3.7.4).
 - `backend/`: Core C++ implementation for parsing inputs, building ARG-MGE temporal networks, running analyses, and exporting outputs (includes `src/`, `include/`, `scripts/`, and build artifacts).
 - `config/`: Runtime configuration files such as path mappings used by the backend pipeline.
 - `data/`: Input datasets and reference tables used for graph construction and downstream analyses.
@@ -60,10 +58,8 @@ Python version 3.8.0 was used with the following libraries: pandas (version 2.0.
 - `json/`: Generated network JSON files consumed by the frontend visualizations.
 - `output/`: Analysis results exported by the backend (graph statistics and grouped result folders).
 - `rmobi/`: Project-specific Python module/package files used by the analysis workflow.
-
 - `LICENSE`: Project license (GPLv3).
 - `README.md`: Project overview, setup, and usage documentation.
-
 
 
 
@@ -72,92 +68,45 @@ Python version 3.8.0 was used with the following libraries: pandas (version 2.0.
 ### Prerequisites
 
 C++17 or later
-
 Make (for build automation)
-
 Standard C++ libraries (<iostream>, <fstream>, <map>, <vector>, etc.)
-
 JSON library (e.g., nlohmann/json)
-
-Python 3.10+ for analysis and plotting scripts
-
-Python packages used by `analysis_scripts/`:
-
-- `numpy`
-- `pandas`
-- `matplotlib`
-- `seaborn`
-
-You can install these packages with:
-
-```bash
-python3 -m pip install numpy pandas matplotlib seaborn
-```
 
 ## Clone the repository
 git clone https://github.com/SlizovskiyLab/RMOBI.git
 
-cd RMOBI
-
 ## Build the C++ project
 
-Step 1: Create and enter build directory
-
+mkdir build
 cd build
 
 ### Linux/macOS
-Step 2: Generate Makefiles with CMake
+Step 2: Generate Makefiles 
 ```
 cmake ..
-```
-
-Step 3: Compile the project
-```
 cmake --build .
-```
-
-Step 4: Go back to project folder. Run the executable
-```
 ./backend/build/rmobi
 ```
 
 ### Windows
-Step 2: Generate Makefiles with CMake
+Step 2: Generate Makefiles
 ```
 cmake .. -G "MinGW Makefiles"
-```
-
-Step 3: Compile the project
-```
 mingw32-make
-```
-
-Step 4: Go back to project folder. Run the executable
-```
 ./build/rmobi.exe
 ```
 
 ### Manually Run
 g++ -std=c++17 -Wall -Iinclude -Ithird_party backend/src/*.cpp -o rmobi.exe
-
 ./rmobi.exe
 
 
 ### Run Visualization Tool Locally
 
 From the project root, run:
-
 ```bash
 python3 -m http.server 8080 --directory docs
 ```
 
-Then open [http://localhost:8080/](http://localhost:8080/). The server uses
-`docs/index.html` as its home page, so the RMOBI website is shown instead of a
-directory listing of the repository.
-
-
-###  Generate plots
-1: cd analysis_scripts 
-
-2: python3 run_all_analysis.py 
+Open [http://localhost:8080/](http://localhost:8080/).
 
